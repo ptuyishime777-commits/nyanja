@@ -10,10 +10,22 @@ import {
 
 const DISMISS_KEY = 'nyanja-pwa-install-dismissed'
 
-interface BeforeInstallPromptEventPwa extends Event {
+/** Chromium’s deferred install prompt (not in every TypeScript DOM lib). */
+interface BeforeInstallPromptEventChromium extends Event {
   readonly platforms: string[]
   prompt(): Promise<void>
   readonly userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>
+}
+
+/** Read Chromium’s one-shot deferred install prompt (stored by inline script in index.html). */
+function windowDeferredPrompt(): BeforeInstallPromptEventChromium | null {
+  if (typeof window === 'undefined') return null
+  const e = window.__NYANJA_BIP__
+  return e &&
+    typeof (e as BeforeInstallPromptEventChromium).prompt === 'function' &&
+    typeof (e as BeforeInstallPromptEventChromium).userChoice !== 'undefined'
+    ? (e as BeforeInstallPromptEventChromium)
+    : null
 }
 
 export function runningAsInstalledPwa(): boolean {
@@ -59,10 +71,9 @@ const PwaInstallContext = createContext<PwaInstallContextValue | null>(null)
 
 export function PwaInstallProvider({ children }: { children: ReactNode }) {
   const [ready, setReady] = useState(false)
-  const [deferred, setDeferred] = useState<BeforeInstallPromptEventPwa | null>(
-    null,
+  const [deferred, setDeferred] = useState<BeforeInstallPromptEventChromium | null>(() =>
+    windowDeferredPrompt(),
   )
-  const [iosGuide, setIosGuide] = useState(false)
   const [dismissTick, setDismissTick] = useState(0)
 
   useEffect(() => {
@@ -70,14 +81,27 @@ export function PwaInstallProvider({ children }: { children: ReactNode }) {
       setReady(true)
       return
     }
-    const onPrompt = (e: Event) => {
-      e.preventDefault()
-      setDeferred(e as BeforeInstallPromptEventPwa)
+
+    const syncFromWindow = () => {
+      setDeferred(windowDeferredPrompt())
     }
-    window.addEventListener('beforeinstallprompt', onPrompt)
-    setIosGuide(iosNeedsAddToHomescreen())
+
+    syncFromWindow()
+    window.addEventListener('nyanja:bip', syncFromWindow)
+    window.addEventListener('nyanja:installed', syncFromWindow)
     setReady(true)
-    return () => window.removeEventListener('beforeinstallprompt', onPrompt)
+
+    return () => {
+      window.removeEventListener('nyanja:bip', syncFromWindow)
+      window.removeEventListener('nyanja:installed', syncFromWindow)
+    }
+  }, [])
+
+  const consumeDeferredPrompt = useCallback(() => {
+    if (typeof window !== 'undefined') {
+      window.__NYANJA_BIP__ = null
+    }
+    setDeferred(null)
   }, [])
 
   const dismiss = useCallback(() => {
@@ -89,44 +113,52 @@ export function PwaInstallProvider({ children }: { children: ReactNode }) {
     } catch {
       /* quota */
     }
-    setDeferred(null)
-    setIosGuide(false)
+    consumeDeferredPrompt()
     setDismissTick((n) => n + 1)
-  }, [])
+  }, [consumeDeferredPrompt])
 
   const runInstall = useCallback(async () => {
-    if (!deferred) return
-    await deferred.prompt()
-    await deferred.userChoice
-    dismiss()
-  }, [deferred, dismiss])
+    const d = deferred
+    if (!d) return
+    try {
+      await d.prompt()
+      await d.userChoice
+    } catch {
+      /* prompt may throw if disallowed */
+    } finally {
+      consumeDeferredPrompt()
+    }
+  }, [deferred, consumeDeferredPrompt])
 
   const tapInstall = useCallback(() => {
     if (deferred) {
       void runInstall()
       return
     }
-    if (iosGuide) {
+    if (iosNeedsAddToHomescreen()) {
       window.alert(
         'To add Nyanja Gift Hub to your home screen (Safari on iPhone/iPad):\n\n1. Tap Share (square with arrow).\n2. Scroll down and tap “Add to Home Screen”.\n3. Tap Add.',
       )
-      return
     }
-    window.alert(
-      'To install this site as an app:\n\n• Chrome / Edge (Android or desktop): Menu (⋮ or ⋯) → “Install app” or look for the install icon in the address bar.\n\n• Safari (iPhone/iPad): Share → Add to Home Screen.',
-    )
-  }, [deferred, iosGuide, runInstall])
+  }, [deferred, runInstall])
 
   const value = useMemo((): PwaInstallContextValue => {
     void dismissTick
     const standalone = ready && runningAsInstalledPwa()
     const dismissed = ready && pwaInstallDismissed()
-    const showInstallButton = ready && !standalone && !dismissed
+    const canChromiumPrompt = deferred != null
+    const showIosManual = iosNeedsAddToHomescreen()
+    const showInstallButton =
+      ready &&
+      !standalone &&
+      !dismissed &&
+      (canChromiumPrompt || showIosManual)
+
     return {
       ready,
       standalone,
       showInstallButton,
-      deferredReady: deferred != null,
+      deferredReady: canChromiumPrompt,
       dismiss,
       tapInstall,
     }

@@ -3,6 +3,14 @@ import { useCallback, useState } from 'react'
 
 export const PRODUCT_IMAGE_PLACEHOLDER = '/nyanja-images/placeholder.svg'
 
+function publicAssetUrl(path: string): string {
+  if (!path || /^https?:\/\//i.test(path)) return path
+  const base = import.meta.env.BASE_URL
+  const rel = path.startsWith('/') ? path.slice(1) : path
+  const prefix = base.endsWith('/') ? base : `${base}/`
+  return `${prefix}${rel}`
+}
+
 const ASPECT_CLASS: Record<string, string> = {
   '1/1': 'aspect-square',
   '4/5': 'aspect-[4/5]',
@@ -41,7 +49,7 @@ export function ProductImage({
 }: Props) {
   const [loaded, setLoaded] = useState(false)
   const [failed, setFailed] = useState(false)
-  const resolvedSrc = failed ? PRODUCT_IMAGE_PLACEHOLDER : src
+  const resolvedSrc = publicAssetUrl(failed ? PRODUCT_IMAGE_PLACEHOLDER : src)
   const aspectCls =
     !fill && (ASPECT_CLASS[aspectRatio as ProductImageAspect] ?? ASPECT_CLASS['1/1'])
 
