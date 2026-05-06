@@ -10,12 +10,6 @@ import { useCatalogStore } from '../store/useCatalogStore'
 import { applyThemeClass, useHubStore } from '../store/useHubStore'
 import { isSupabaseConfigured, supabase } from '../lib/supabaseClient'
 
-/**
- * Survives React Strict Mode double-mount: only the first successful INITIAL_SESSION
- * runs the expensive remote catalog + profiles fetch.
- */
-let initialRemoteCatalogUsersSynced = false
-
 export function PersistenceGate({ children }: { children: ReactNode }) {
   const [hubHydrated, setHubHydrated] = useState(false)
 
@@ -39,52 +33,74 @@ export function PersistenceGate({ children }: { children: ReactNode }) {
     void useCatalogStore.getState().fetchProducts()
   }, [hubHydrated])
 
-  // 3) Supabase — session comes from this single listener (includes INITIAL_SESSION).
-  //    No separate getSession() on boot; sign-in/out handled here too.
+  // 3) With Supabase — load the shop catalog as soon as the hub is ready (does not depend on auth).
+  useEffect(() => {
+    if (!hubHydrated || !isSupabaseConfigured()) return
+    void useCatalogStore.getState().fetchProducts()
+  }, [hubHydrated])
+
+  // 4) Session + profiles/orders: single listener, no getSession() on boot.
+  //    Defer async work off the auth callback — awaiting inside the listener can stall
+  //    signIn and block INITIAL_SESSION / SIGNED_IN from finishing (Supabase gotrue lock).
   useEffect(() => {
     if (!hubHydrated || !isSupabaseConfigured()) return
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, session) => {
+    } = supabase.auth.onAuthStateChange((event, session) => {
       const uid = session?.user?.id ?? null
       useAuthStore.setState({ sessionUserId: uid })
-
-      if (event === 'INITIAL_SESSION') {
-        if (!initialRemoteCatalogUsersSynced) {
-          initialRemoteCatalogUsersSynced = true
-          try {
-            await useAuthStore.getState().ensureSeeded()
-          } catch (e) {
-            console.error('[Nyanja] Initial catalog / users sync failed', e)
-          }
-        }
-        useAuthStore.getState().syncHubFromSession()
-        return
-      }
 
       if (event === 'SIGNED_OUT') {
         useAuthStore.setState({
           users: [],
           buckets: {},
           remoteError: null,
+          remoteLoading: false,
         })
         return
       }
 
-      if (event === 'SIGNED_IN' || event === 'USER_UPDATED') {
-        try {
-          await useAuthStore.getState().refreshRemoteState()
-        } catch (e) {
-          console.error('[Nyanja] refreshRemoteState failed', e)
-        }
-        useAuthStore.getState().syncHubFromSession()
-        return
+      if (
+        event === 'INITIAL_SESSION' ||
+        event === 'SIGNED_IN' ||
+        event === 'USER_UPDATED'
+      ) {
+        useAuthStore.setState({ remoteLoading: true, remoteError: null })
       }
 
       if (event === 'TOKEN_REFRESHED') {
-        useAuthStore.getState().syncHubFromSession()
+        setTimeout(() => {
+          useAuthStore.getState().syncHubFromSession()
+        }, 0)
+        return
       }
+
+      const run = () => {
+        void (async () => {
+          if (event === 'INITIAL_SESSION') {
+            try {
+              await useAuthStore.getState().refreshRemoteState()
+            } catch (e) {
+              console.error('[Nyanja] INITIAL_SESSION refreshRemoteState failed', e)
+            }
+            useAuthStore.getState().syncHubFromSession()
+            return
+          }
+
+          if (event === 'SIGNED_IN' || event === 'USER_UPDATED') {
+            try {
+              await useAuthStore.getState().refreshRemoteState()
+            } catch (e) {
+              console.error('[Nyanja] refreshRemoteState failed', e)
+            }
+            useAuthStore.getState().syncHubFromSession()
+            return
+          }
+        })()
+      }
+
+      setTimeout(run, 0)
     })
 
     return () => {

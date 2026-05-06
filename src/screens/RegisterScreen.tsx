@@ -12,12 +12,20 @@ export function RegisterScreen() {
   const st = location.state as RegState | null
 
   const sessionUserId = useAuthStore((s) => s.sessionUserId)
+  const remoteLoading = useAuthStore((s) => s.remoteLoading)
   const allowed = useAuthStore((s) => {
     if (!s.sessionUserId) return false
     const u = s.users.find((x) => x.id === s.sessionUserId)
     return !!(u && !u.disabled)
   })
   const register = useAuthStore((s) => s.register)
+
+  const remoteError = useAuthStore((s) => s.remoteError)
+  const hasProfile = useAuthStore((s) =>
+    s.sessionUserId
+      ? s.users.some((u) => u.id === s.sessionUserId)
+      : false,
+  )
 
   const from = useMemo(() => {
     const raw = st?.from
@@ -29,6 +37,52 @@ export function RegisterScreen() {
   const [password, setPassword] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  if (sessionUserId && remoteLoading) {
+    return (
+      <div className="mx-auto max-w-md py-24 text-center text-sm text-muted dark:text-dark-muted">
+        Restoring your session…
+      </div>
+    )
+  }
+
+  if (sessionUserId && !remoteLoading && !hasProfile) {
+    return (
+      <div className="mx-auto max-w-md space-y-4 py-16 text-center">
+        <p className="text-sm text-ink dark:text-cream">
+          Could not load your account data.
+          {remoteError ? ` ${remoteError}` : ' Check RLS policies or try again.'}
+        </p>
+        <Button
+          type="button"
+          variant="primary"
+          className="mx-auto"
+          onClick={() => useAuthStore.getState().logout()}
+        >
+          Sign out
+        </Button>
+      </div>
+    )
+  }
+
+  if (sessionUserId && !remoteLoading && !hasProfile) {
+    return (
+      <div className="mx-auto max-w-md space-y-4 py-16 text-center">
+        <p className="text-sm text-ink dark:text-cream">
+          Could not load your account data.
+          {remoteError ? ` ${remoteError}` : ' Check RLS policies or try again.'}
+        </p>
+        <Button
+          type="button"
+          variant="primary"
+          className="mx-auto"
+          onClick={() => useAuthStore.getState().logout()}
+        >
+          Sign out
+        </Button>
+      </div>
+    )
+  }
 
   if (sessionUserId && allowed) {
     return <Navigate to={from} replace />

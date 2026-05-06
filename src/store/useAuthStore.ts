@@ -238,7 +238,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       }
     }
 
-    set({ sessionUserId: uid, authLoading: false })
+    set({ sessionUserId: uid, authLoading: false, remoteLoading: true })
     const hub = useHubStore.getState()
     const { error: hubErr } = await persistHubToProfile(uid, hub.cart, hub.wishlistIds)
     if (hubErr) {
@@ -256,7 +256,12 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     }
     const e = normalizeEmail(email)
     const prior = get().sessionUserId
-    if (prior) await get().saveActiveBucketFromHub()
+    if (prior) {
+      await Promise.race([
+        get().saveActiveBucketFromHub(),
+        new Promise<void>((r) => setTimeout(r, 4_000)),
+      ])
+    }
 
     set({ authLoading: true, authError: null })
     const { data, error } = await supabase.auth.signInWithPassword({
@@ -300,7 +305,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       }
     }
 
-    set({ sessionUserId: uid, authLoading: false })
+    set({ sessionUserId: uid, authLoading: false, remoteLoading: true })
     return { ok: true }
   },
 

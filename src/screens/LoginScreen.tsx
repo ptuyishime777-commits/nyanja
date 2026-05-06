@@ -25,6 +25,7 @@ export function LoginScreen() {
   const st = location.state as LoginState | null
 
   const sessionUserId = useAuthStore((s) => s.sessionUserId)
+  const remoteLoading = useAuthStore((s) => s.remoteLoading)
   const login = useAuthStore((s) => s.login)
 
   const allowed = useAuthStore((s) => {
@@ -32,6 +33,13 @@ export function LoginScreen() {
     const u = s.users.find((x) => x.id === s.sessionUserId)
     return !!(u && !u.disabled)
   })
+
+  const remoteError = useAuthStore((s) => s.remoteError)
+  const hasProfile = useAuthStore((s) =>
+    s.sessionUserId
+      ? s.users.some((u) => u.id === s.sessionUserId)
+      : false,
+  )
 
   const from = useMemo(() => {
     const raw = st?.from
@@ -42,6 +50,33 @@ export function LoginScreen() {
   const [password, setPassword] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  if (sessionUserId && remoteLoading) {
+    return (
+      <div className="mx-auto max-w-md py-24 text-center text-sm text-muted dark:text-dark-muted">
+        Restoring your session…
+      </div>
+    )
+  }
+
+  if (sessionUserId && !remoteLoading && !hasProfile) {
+    return (
+      <div className="mx-auto max-w-md space-y-4 py-16 text-center">
+        <p className="text-sm text-ink dark:text-cream">
+          Could not load your account data.
+          {remoteError ? ` ${remoteError}` : ' Check RLS policies or try again.'}
+        </p>
+        <Button
+          type="button"
+          variant="primary"
+          className="mx-auto"
+          onClick={() => useAuthStore.getState().logout()}
+        >
+          Sign out
+        </Button>
+      </div>
+    )
+  }
 
   if (sessionUserId && allowed) {
     const u = getSessionUser(useAuthStore.getState())
@@ -62,13 +97,14 @@ export function LoginScreen() {
       return
     }
 
-    const u = getSessionUser(useAuthStore.getState())
     const wantAdmin = Boolean(st?.admin)
-    if (wantAdmin && isAdminUser(u)) {
-      navigate('/admin', { replace: true })
-      return
-    }
-    if (wantAdmin && !isAdminUser(u)) {
+    if (wantAdmin) {
+      await useAuthStore.getState().refreshRemoteState()
+      const u = getSessionUser(useAuthStore.getState())
+      if (isAdminUser(u)) {
+        navigate('/admin', { replace: true })
+        return
+      }
       setError('This account cannot open the admin portal.')
       useAuthStore.getState().logout()
       return
