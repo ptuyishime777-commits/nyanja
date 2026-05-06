@@ -1,0 +1,178 @@
+@import 'tailwindcss';
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --font-display: 'Cormorant Garamond', ui-serif, Georgia, serif;
+  --font-sans: 'DM Sans', ui-sans-serif, system-ui, sans-serif;
+
+  --color-rose: #e8b4b8;
+  --color-rose-deep: #d4969c;
+  --color-cream: #f5e6e8;
+  --color-ink: #1a1a1a;
+  --color-surface: #fdf8f9;
+  --color-surface-2: #faf3f5;
+  --color-muted: #7a6e72;
+
+  --color-dark-bg: #1f191c;
+  --color-dark-surface: #2a2326;
+  --color-dark-elevated: #342c30;
+  --color-dark-muted: #c9bdc2;
+
+  --radius-card: 1.25rem;
+  --radius-lg: 1.5rem;
+  --radius-xl: 1.75rem;
+
+  --shadow-soft:
+    0 22px 50px -18px rgba(232, 180, 184, 0.45),
+    0 10px 24px -12px rgba(26, 26, 26, 0.06);
+  --shadow-soft-dark:
+    0 24px 48px -16px rgba(0, 0, 0, 0.55),
+    0 0 0 1px rgba(232, 180, 184, 0.08);
+  --shadow-lift:
+    0 28px 60px -20px rgba(232, 180, 184, 0.35),
+    0 14px 28px -14px rgba(26, 26, 26, 0.08);
+}
+
+@layer base {
+  html {
+    @apply scroll-smooth antialiased;
+    --header-bar-height: 56px;
+  }
+  body {
+    @apply bg-surface text-ink font-sans text-[15px] leading-relaxed tracking-tight transition-colors duration-300 dark:bg-dark-bg dark:text-cream;
+  }
+  #root {
+    @apply min-h-dvh;
+  }
+  ::selection {
+    @apply bg-rose/40 text-ink dark:bg-rose/30 dark:text-cream;
+  }
+}
+
+@layer components {
+  /** Standard card shell (light + dark variants) */
+  .nyanja-card {
+    box-sizing: border-box;
+    border: 1px solid #ede8e3;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    background: #ffffff;
+    padding: 20px 24px;
+    transition: box-shadow 0.2s ease;
+  }
+
+  .dark .nyanja-card {
+    background: #2a2326;
+    border-color: rgba(240, 236, 232, 0.18);
+  }
+
+  /** Full-bleed media (product / hero) — same chrome, no inner padding */
+  .nyanja-card--flush {
+    padding: 0;
+    overflow: hidden;
+  }
+
+  /** Hover lift — product + category cards only */
+  .nyanja-card-interactive {
+    transition: all 0.2s ease;
+  }
+
+  .nyanja-card-interactive:hover {
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.13);
+    transform: translateY(-3px);
+  }
+}
+
+@layer utilities {
+  .font-display {
+    font-family: var(--font-display);
+  }
+  .text-balance {
+    text-wrap: balance;
+  }
+  .shadow-premium {
+    box-shadow: var(--shadow-soft);
+  }
+  .dark .shadow-premium {
+    box-shadow: var(--shadow-soft-dark);
+  }
+  .shadow-lift-hover {
+    transition:
+      box-shadow 0.35s ease,
+      transform 0.35s ease;
+  }
+  .masonry-grid {
+    column-count: 2;
+    column-gap: 0.75rem;
+  }
+  @media (min-width: 640px) {
+    .masonry-grid {
+      column-count: 3;
+      column-gap: 1rem;
+    }
+  }
+  @media (min-width: 1024px) {
+    .masonry-grid {
+      column-count: 4;
+      column-gap: 1.25rem;
+    }
+  }
+  .masonry-item {
+    break-inside: avoid;
+    margin-bottom: 0.75rem;
+  }
+  @media (min-width: 640px) {
+    .masonry-item {
+      margin-bottom: 1rem;
+    }
+  }
+  @media (min-width: 1024px) {
+    .masonry-item {
+      margin-bottom: 1.25rem;
+    }
+  }
+  .scrollbar-none {
+    scrollbar-width: none;
+  }
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
+  .glass-card {
+    @apply border border-ink/10 bg-white/55 shadow-sm backdrop-blur-md dark:border-cream/12 dark:bg-dark-elevated/45;
+  }
+  .glass-panel {
+    @apply border border-ink/10 bg-white/60 backdrop-blur-lg dark:border-cream/12 dark:bg-dark-surface/55;
+    box-shadow: var(--shadow-soft);
+  }
+  .dark .glass-panel {
+    box-shadow: var(--shadow-soft-dark);
+  }
+  .img-shimmer {
+    background: linear-gradient(
+      105deg,
+      transparent 40%,
+      rgba(255, 255, 255, 0.55) 50%,
+      transparent 60%
+    );
+    background-size: 200% 100%;
+    animation: img-shimmer 1.35s ease-in-out infinite;
+  }
+  .dark .img-shimmer {
+    background: linear-gradient(
+      105deg,
+      transparent 40%,
+      rgba(232, 180, 184, 0.2) 50%,
+      transparent 60%
+    );
+    background-size: 200% 100%;
+  }
+  @keyframes img-shimmer {
+    0% {
+      background-position: 100% 0;
+    }
+    100% {
+      background-position: -100% 0;
+    }
+  }
+}
