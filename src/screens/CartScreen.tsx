@@ -88,14 +88,71 @@ export function CartScreen() {
 
   if (cart.length === 0) {
     return (
-      <div className="py-16 text-center">
-        <SectionHeader title="Your bag is resting" />
-        <p className="mt-2 text-muted dark:text-dark-muted">
-          Add something beautiful — we&apos;ll keep it safe here.
-        </p>
-        <Link to="/shop" className="mt-8 inline-block">
-          <Button variant="secondary">Continue shopping</Button>
-        </Link>
+      <div className="relative min-h-[min(50dvh,22rem)] overflow-hidden rounded-[1.75rem] bg-[#faf7f4] shadow-premium ring-1 ring-ink/[0.06] sm:min-h-[min(60dvh,34rem)] md:min-h-[min(68dvh,40rem)] dark:bg-dark-surface/95 dark:ring-cream/10">
+        <div className="cart-empty-bg-blobs" aria-hidden>
+          <div className="cart-empty-blob cart-empty-blob-1" />
+          <div className="cart-empty-blob cart-empty-blob-2" />
+          <div className="cart-empty-blob cart-empty-blob-3" />
+        </div>
+
+        <div className="cart-empty-state cart-empty-fade-up relative z-[1] mx-auto flex min-h-[min(50dvh,22rem)] w-full max-w-[480px] flex-col items-center justify-center px-6 py-8 text-center sm:min-h-[min(60dvh,34rem)] sm:px-10 sm:py-10 md:min-h-[min(68dvh,40rem)] md:py-12">
+          <div className="cart-empty-illustration !mb-5 sm:!mb-8" aria-hidden>
+            <span className="cart-empty-sparkle top-[10px] left-[10px]">
+              ✨
+            </span>
+            <span className="cart-empty-sparkle cart-empty-sparkle-2">⭐</span>
+            <span className="cart-empty-sparkle cart-empty-sparkle-3">💫</span>
+            <span className="cart-empty-sparkle cart-empty-sparkle-4">✨</span>
+            <div className="cart-empty-gift-box">
+              <div className="cart-empty-ribbon-v" />
+              <div className="cart-empty-ribbon-h" />
+              <div className="cart-empty-bow-wrap">
+                <div className="cart-empty-bow-left" />
+                <div className="cart-empty-bow-right" />
+                <div className="cart-empty-bow-knot" />
+              </div>
+            </div>
+          </div>
+
+          <h1 className="font-display text-balance text-[2.1rem] font-normal leading-[1.15] tracking-[-0.01em] text-[#2a1a14] sm:text-[2.35rem] md:text-[2.6rem] dark:text-cream">
+            Your bag is{' '}
+            <em className="italic text-[#c9605a] dark:text-rose">empty</em>
+            <br />
+            let&apos;s fix that 🎁
+          </h1>
+
+          <p className="mt-3 text-[0.95rem] font-light leading-relaxed text-[#8a6a5a] dark:text-dark-muted">
+            Every great gift starts with a single pick.
+            <br />
+            Rwanda&apos;s finest curated pieces are waiting for you.
+          </p>
+
+          <div className="mx-auto mt-5 mb-1 flex max-w-full flex-wrap justify-center gap-2.5 sm:mt-6 sm:gap-6 md:mb-2">
+            <div className="flex items-center gap-1.5 rounded-full border border-[#e8ddd8] bg-white/70 px-3.5 py-1.5 text-[0.8rem] text-[#7a5a4a] backdrop-blur-[8px] dark:border-cream/15 dark:bg-dark-elevated/60 dark:text-dark-muted">
+              🚚 Fast delivery in Kigali
+            </div>
+            <div className="flex items-center gap-1.5 rounded-full border border-[#e8ddd8] bg-white/70 px-3.5 py-1.5 text-[0.8rem] text-[#7a5a4a] backdrop-blur-[8px] dark:border-cream/15 dark:bg-dark-elevated/60 dark:text-dark-muted">
+              🎀 Beautiful gifts
+            </div>
+            <div className="flex items-center gap-1.5 rounded-full border border-[#e8ddd8] bg-white/70 px-3.5 py-1.5 text-[0.8rem] text-[#7a5a4a] backdrop-blur-[8px] dark:border-cream/15 dark:bg-dark-elevated/60 dark:text-dark-muted">
+              💝 Handpicked with love
+            </div>
+          </div>
+
+          <Link to="/shop" className="cart-empty-cta">
+            🛍️ Explore the collection
+          </Link>
+
+          <p className="mt-5 text-[0.82rem] text-[#a88a7a] dark:text-dark-muted">
+            Saved something earlier?{' '}
+            <Link
+              to="/profile"
+              className="text-[#c9605a] underline decoration-[#c9605a]/40 underline-offset-[3px] transition-colors hover:text-[#b85551] dark:text-rose dark:decoration-rose/40"
+            >
+              Check your wishlist →
+            </Link>
+          </p>
+        </div>
       </div>
     )
   }
