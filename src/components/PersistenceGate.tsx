@@ -1,107 +1,96 @@
-import { useEffect, useState, type ReactNode } from 'react'
-import { SEED_PRODUCTS } from '../data/products'
+import {
+  useEffect,
+  useLayoutEffect,
+  useState,
+  type ReactNode,
+} from 'react'
+import { AppShellSkeleton } from './AppShellSkeleton'
 import { useAuthStore } from '../store/useAuthStore'
 import { useCatalogStore } from '../store/useCatalogStore'
 import { applyThemeClass, useHubStore } from '../store/useHubStore'
 import { isSupabaseConfigured, supabase } from '../lib/supabaseClient'
 
-const BOOT_TIMEOUT_MS = 15_000
-
-function raceWithTimeout<T>(promise: Promise<T>, ms: number): Promise<T | 'timeout'> {
-  return Promise.race([
-    promise.then((v) => v),
-    new Promise<'timeout'>((resolve) =>
-      window.setTimeout(() => resolve('timeout'), ms),
-    ),
-  ])
-}
+/**
+ * Survives React Strict Mode double-mount: only the first successful INITIAL_SESSION
+ * runs the expensive remote catalog + profiles fetch.
+ */
+let initialRemoteCatalogUsersSynced = false
 
 export function PersistenceGate({ children }: { children: ReactNode }) {
-  const [ready, setReady] = useState(false)
+  const [hubHydrated, setHubHydrated] = useState(false)
 
-  useEffect(() => {
-    let ignore = false
-
-    const runBoot = async () => {
-      try {
-        const rehydrateMaybe = useHubStore.persist.rehydrate()
-        const reh = await raceWithTimeout(
-          Promise.resolve(rehydrateMaybe as Promise<void> | void),
-          BOOT_TIMEOUT_MS,
-        )
-        if (reh === 'timeout') {
-          console.warn('[Nyanja] Hub rehydrate timed out; continuing with defaults.')
-        }
-        if (ignore) return
-
-        if (isSupabaseConfigured()) {
-          const sessResult = await raceWithTimeout(
-            supabase.auth.getSession(),
-            BOOT_TIMEOUT_MS,
-          )
-          if (sessResult !== 'timeout') {
-            const {
-              data: { session },
-            } = sessResult as Awaited<ReturnType<typeof supabase.auth.getSession>>
-            useAuthStore.setState({
-              sessionUserId: session?.user.id ?? null,
-            })
-          } else {
-            console.warn('[Nyanja] getSession timed out during bootstrap.')
-          }
-        }
-
-        const seed = raceWithTimeout(
-          useAuthStore.getState().ensureSeeded(),
-          BOOT_TIMEOUT_MS,
-        )
-        const seeded = await seed
-        if (seeded === 'timeout') {
-          console.warn('[Nyanja] ensureSeeded timed out; unlocking UI.')
-          if (useCatalogStore.getState().products.length === 0) {
-            useCatalogStore.setState({
-              products: structuredClone(SEED_PRODUCTS),
-              catalogLoading: false,
-              catalogError:
-                'Catalog is taking too long, showing bundled products until sync completes.',
-            })
-          }
-        }
-
-        if (ignore) return
-        useAuthStore.getState().syncHubFromSession()
-        applyThemeClass(useHubStore.getState().theme)
-        setReady(true)
-      } catch (e) {
-        console.error('Persistence bootstrap failed', e)
-        if (!ignore) {
-          applyThemeClass(useHubStore.getState().theme)
-          setReady(true)
-        }
-      }
-    }
-
-    void runBoot()
+  // 1) Zustand persist (cart, theme) from localStorage first — fast, no network.
+  useLayoutEffect(() => {
+    let alive = true
+    void (async () => {
+      await useHubStore.persist.rehydrate()
+      if (!alive) return
+      applyThemeClass(useHubStore.getState().theme)
+      setHubHydrated(true)
+    })()
     return () => {
-      ignore = true
+      alive = false
     }
   }, [])
 
+  // 2) Offline / no Supabase → local seed catalog only
   useEffect(() => {
-    if (!isSupabaseConfigured()) return
+    if (!hubHydrated || isSupabaseConfigured()) return
+    void useCatalogStore.getState().fetchProducts()
+  }, [hubHydrated])
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
-        useAuthStore.setState({ sessionUserId: session?.user.id ?? null })
-        await useAuthStore.getState().refreshRemoteState()
+  // 3) Supabase — session comes from this single listener (includes INITIAL_SESSION).
+  //    No separate getSession() on boot; sign-in/out handled here too.
+  useEffect(() => {
+    if (!hubHydrated || !isSupabaseConfigured()) return
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
+      const uid = session?.user?.id ?? null
+      useAuthStore.setState({ sessionUserId: uid })
+
+      if (event === 'INITIAL_SESSION') {
+        if (!initialRemoteCatalogUsersSynced) {
+          initialRemoteCatalogUsersSynced = true
+          try {
+            await useAuthStore.getState().ensureSeeded()
+          } catch (e) {
+            console.error('[Nyanja] Initial catalog / users sync failed', e)
+          }
+        }
         useAuthStore.getState().syncHubFromSession()
-      },
-    )
+        return
+      }
+
+      if (event === 'SIGNED_OUT') {
+        useAuthStore.setState({
+          users: [],
+          buckets: {},
+          remoteError: null,
+        })
+        return
+      }
+
+      if (event === 'SIGNED_IN' || event === 'USER_UPDATED') {
+        try {
+          await useAuthStore.getState().refreshRemoteState()
+        } catch (e) {
+          console.error('[Nyanja] refreshRemoteState failed', e)
+        }
+        useAuthStore.getState().syncHubFromSession()
+        return
+      }
+
+      if (event === 'TOKEN_REFRESHED') {
+        useAuthStore.getState().syncHubFromSession()
+      }
+    })
 
     return () => {
       subscription.unsubscribe()
     }
-  }, [])
+  }, [hubHydrated])
 
   useEffect(() => {
     return useHubStore.subscribe((state, prev) => {
@@ -116,19 +105,8 @@ export function PersistenceGate({ children }: { children: ReactNode }) {
     })
   }, [])
 
-  if (!ready) {
-    return (
-      <div
-        className="flex min-h-dvh items-center justify-center bg-surface text-sm text-muted dark:bg-dark-bg dark:text-dark-muted"
-        style={{
-          minHeight: '100dvh',
-          color: '#5c5256',
-          backgroundColor: '#fdf8f9',
-        }}
-      >
-        Loading…
-      </div>
-    )
+  if (!hubHydrated) {
+    return <AppShellSkeleton />
   }
 
   return children

@@ -118,7 +118,11 @@ export const useCatalogStore = create<CatalogState>((set, get) => ({
       })
       return
     }
-    set({ catalogLoading: true, catalogError: null })
+    set((s) => ({
+      catalogLoading: true,
+      catalogError: null,
+      products: s.products.length > 0 ? s.products : cloneSeed(),
+    }))
     const res = await fetchProductsFromSupabase()
     if (!res.ok) {
       set({

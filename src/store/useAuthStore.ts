@@ -139,10 +139,14 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   ensureSeeded: async () => {
-    await useCatalogStore.getState().fetchProducts()
-    if (isSupabaseConfigured()) {
-      await get().refreshRemoteState()
+    if (!isSupabaseConfigured()) {
+      await useCatalogStore.getState().fetchProducts()
+      return
     }
+    await Promise.all([
+      useCatalogStore.getState().fetchProducts(),
+      get().refreshRemoteState(),
+    ])
   },
 
   syncHubFromSession: () => {
@@ -240,8 +244,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     if (hubErr) {
       set({ profileMutationError: hubErr.message })
     }
-    await get().refreshRemoteState()
-    get().syncHubFromSession()
     return { ok: true, userId: uid }
   },
 
@@ -299,8 +301,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     }
 
     set({ sessionUserId: uid, authLoading: false })
-    await get().refreshRemoteState()
-    get().syncHubFromSession()
     return { ok: true }
   },
 

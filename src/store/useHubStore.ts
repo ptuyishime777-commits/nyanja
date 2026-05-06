@@ -102,6 +102,8 @@ export const useHubStore = create<HubState>()(
     }),
     {
       name: 'nyanja-gift-hub',
+      /** Hydration is triggered explicitly in `PersistenceGate` (ordered bootstrap). */
+      skipHydration: true,
       storage: createJSONStorage(() => localStorage),
       partialize: (s) => ({
         theme: s.theme,

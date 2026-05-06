@@ -23,6 +23,7 @@ const FILTER_TABS: readonly (ProductCategory | 'all')[] = [
 export function ShopScreen() {
   const [params, setParams] = useSearchParams()
   const products = useCatalogStore((s) => s.products)
+  const catalogLoading = useCatalogStore((s) => s.catalogLoading)
   const catParam = params.get('category')
   const category: ProductCategory | 'all' =
     catParam && catParam in CATEGORY_LABELS
@@ -57,6 +58,11 @@ export function ShopScreen() {
         eyebrow="Explore"
         title="Discover pieces with soul"
       />
+      {catalogLoading && (
+        <p className="text-xs text-ink/55 dark:text-cream/50" role="status">
+          Updating catalog…
+        </p>
+      )}
 
       <div className="sticky top-[var(--header-bar-height)] z-20 -mx-4 border-b border-ink/6 bg-surface/90 px-4 py-3 backdrop-blur-md dark:border-cream/8 dark:bg-dark-bg/90 md:static md:z-0 md:mx-0 md:border-0 md:bg-transparent md:px-0 md:py-0">
         <Input
