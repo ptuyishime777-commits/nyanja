@@ -561,8 +561,8 @@ export function AdminProductsScreen() {
           Danger zone
         </p>
         <p className="mt-1.5 max-w-lg text-xs text-muted dark:text-dark-muted">
-          Restoring the seed catalog replaces every product in this browser with the built-in demo set. Custom
-          listings are removed.
+          Restoring the seed catalog replaces remote products with the bundled starter
+          catalog from this app. Custom listings in the database are removed.
         </p>
         <button
           type="button"

@@ -3,17 +3,14 @@ import { persist, createJSONStorage } from 'zustand/middleware'
 import type { CartLine } from '../models/cart'
 
 export type ThemeMode = 'light' | 'dark'
-export type Language = 'en' | 'rw'
 
 interface HubState {
   theme: ThemeMode
-  language: Language
   notificationsEnabled: boolean
   wishlistIds: string[]
   cart: CartLine[]
   setTheme: (mode: ThemeMode) => void
   toggleTheme: () => void
-  setLanguage: (lang: Language) => void
   setNotificationsEnabled: (v: boolean) => void
   toggleWishlist: (productId: string) => void
   isWishlisted: (productId: string) => boolean
@@ -35,7 +32,6 @@ export const useHubStore = create<HubState>()(
   persist(
     (set, get) => ({
       theme: 'light',
-      language: 'en',
       notificationsEnabled: true,
       wishlistIds: [],
       cart: [],
@@ -51,7 +47,6 @@ export const useHubStore = create<HubState>()(
         set({ theme: next })
       },
 
-      setLanguage: (language) => set({ language }),
       setNotificationsEnabled: (notificationsEnabled) =>
         set({ notificationsEnabled }),
 
@@ -110,7 +105,6 @@ export const useHubStore = create<HubState>()(
       storage: createJSONStorage(() => localStorage),
       partialize: (s) => ({
         theme: s.theme,
-        language: s.language,
         notificationsEnabled: s.notificationsEnabled,
         wishlistIds: s.wishlistIds,
         cart: s.cart,

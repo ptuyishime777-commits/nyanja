@@ -93,8 +93,11 @@ export function LoginScreen() {
           Sign in
         </h1>
         <p className="mt-3 text-sm text-muted dark:text-dark-muted">
-          Use your email and password to see your orders and delivery status on
-          your dashboard.
+          Sign in with your email and password to open your dashboard.
+        </p>
+        <p className="mt-2 text-sm leading-relaxed text-ink/90 dark:text-cream/95">
+          Track each order through processing and shipping — your bag moves with
+          you when you register.
         </p>
       </div>
 
@@ -151,18 +154,6 @@ export function LoginScreen() {
         </Link>
       </p>
 
-      <div className="nyanja-card text-xs leading-relaxed text-muted dark:text-dark-muted">
-        <p className="font-semibold text-ink dark:text-cream">Demo accounts</p>
-        <p className="mt-1 font-mono text-[11px]">
-          Customer · demo@nyanja.rw / DemoGift2026
-        </p>
-        <p className="mt-0.5 font-mono text-[11px]">
-          Admin · admin@nyanja.rw / NyanjaAdmin2026
-        </p>
-        <p className="mt-2 text-[10px]">
-          Stored only in your browser — add a backend for production.
-        </p>
-      </div>
     </div>
   )
 }

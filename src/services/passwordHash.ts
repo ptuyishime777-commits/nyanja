@@ -1,4 +1,4 @@
-/** Browser-local SHA-256 hex digest for demo accounts (not a substitute for server-side auth). */
+/** Client-side SHA-256 hex digest utilities (Supabase Auth owns real credentials). */
 export async function hashPassword(plain: string): Promise<string> {
   const buf = await crypto.subtle.digest(
     'SHA-256',

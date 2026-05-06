@@ -71,8 +71,6 @@ export function ProfileScreen() {
   const wishlistIds = useHubStore((s) => s.wishlistIds)
   const theme = useHubStore((s) => s.theme)
   const setTheme = useHubStore((s) => s.setTheme)
-  const language = useHubStore((s) => s.language)
-  const setLanguage = useHubStore((s) => s.setLanguage)
   const notificationsEnabled = useHubStore((s) => s.notificationsEnabled)
   const setNotificationsEnabled = useHubStore((s) => s.setNotificationsEnabled)
 
@@ -206,33 +204,6 @@ export function ProfileScreen() {
           Settings
         </h2>
         <div className="mt-4 space-y-4">
-          <div className="nyanja-card">
-            <p className="text-sm font-semibold text-ink dark:text-cream">Language</p>
-            <div className="mt-3 flex gap-2">
-              <Button
-                type="button"
-                variant={language === 'en' ? 'secondary' : 'ghost'}
-                className="!min-h-10 !px-4"
-                onClick={() => setLanguage('en')}
-              >
-                English
-              </Button>
-              <Button
-                type="button"
-                variant={language === 'rw' ? 'secondary' : 'ghost'}
-                className="!min-h-10 !px-4"
-                onClick={() => setLanguage('rw')}
-              >
-                Kinyarwanda
-              </Button>
-            </div>
-            <p className="mt-2 text-xs text-muted dark:text-dark-muted">
-              {language === 'rw'
-                ? 'Urubuga ruzakomeza mu Cyongereza ku buryo bw’ubu (placeholder).'
-                : 'Full Kinyarwanda copy can ship in a later iteration.'}
-            </p>
-          </div>
-
           <Toggle
             checked={theme === 'dark'}
             onChange={(v) => setTheme(v ? 'dark' : 'light')}
