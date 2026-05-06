@@ -6,6 +6,7 @@ import {
   useState,
 } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { usePwaInstall } from '../../context/PwaInstallContext'
 import { getSessionUser, useAuthStore } from '../../store/useAuthStore'
 import { useHubStore } from '../../store/useHubStore'
 import { initialsForUser } from '../../utils/userInitials'
@@ -80,6 +81,8 @@ export function HeaderBar() {
   const sessionUser = useAuthStore((s) => getSessionUser(s))
   const sessionUserId = useAuthStore((s) => s.sessionUserId)
   const logout = useAuthStore((s) => s.logout)
+  const { showInstallButton, tapInstall, dismiss: dismissPwaInstall } =
+    usePwaInstall()
 
   const accountEmail = sessionUser?.email ?? null
 
@@ -225,7 +228,26 @@ export function HeaderBar() {
           </Link>
 
           <nav className="hidden min-w-0 flex-1 items-center justify-end gap-0 md:flex">
-            <div className="flex items-center gap-11 lg:gap-14">
+            <div className="flex items-center gap-6 lg:gap-10 xl:gap-12">
+              {showInstallButton && (
+                <span className="flex shrink-0 items-center gap-0.5 rounded-full border border-rose-deep/40 bg-rose/25 pl-3 pr-1 py-1 dark:border-rose/35 dark:bg-rose/15">
+                  <button
+                    type="button"
+                    onClick={() => tapInstall()}
+                    className="text-xs font-semibold text-ink dark:text-cream"
+                  >
+                    Install app
+                  </button>
+                  <button
+                    type="button"
+                    aria-label="Hide install prompt for one week"
+                    onClick={dismissPwaInstall}
+                    className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-sm text-ink/55 transition hover:bg-black/5 hover:text-ink dark:text-cream/55 dark:hover:bg-white/10 dark:hover:text-cream"
+                  >
+                    ×
+                  </button>
+                </span>
+              )}
               {links.map((l) => {
                 const active =
                   location.pathname === l.to ||
@@ -261,7 +283,16 @@ export function HeaderBar() {
             {profileLoggedIn}
           </nav>
 
-          <div className="flex shrink-0 items-center gap-3 md:hidden">
+          <div className="flex shrink-0 items-center gap-2 md:hidden">
+            {showInstallButton && (
+              <button
+                type="button"
+                onClick={() => tapInstall()}
+                className="shrink-0 rounded-full border border-rose-deep/45 bg-rose/30 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-rose-deep dark:border-rose/40 dark:bg-rose/20 dark:text-rose"
+              >
+                Install
+              </button>
+            )}
             {profileMobile}
             <Link
               to="/cart"

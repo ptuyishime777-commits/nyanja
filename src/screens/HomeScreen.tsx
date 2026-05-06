@@ -2,6 +2,7 @@ import type { ComponentType } from 'react'
 import { motion } from 'framer-motion'
 import { Link } from 'react-router-dom'
 import { CATEGORY_LABELS, type ProductCategory } from '../models/product'
+import { usePwaInstall } from '../context/PwaInstallContext'
 import { useCatalogStore } from '../store/useCatalogStore'
 import { Button } from '../widgets/Button'
 import { FeaturedSpotlight } from '../widgets/FeaturedSpotlight'
@@ -181,6 +182,7 @@ const homeCategoryTiles: {
 ]
 
 export function HomeScreen() {
+  const { showInstallButton, tapInstall } = usePwaInstall()
   const products = useCatalogStore((s) => s.products)
   const featured = products.filter((p) => p.featured)
   const trending = products.filter((p) => p.trending)
@@ -214,7 +216,7 @@ export function HomeScreen() {
           <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
             <Link to="/shop">
               <Button variant="primary" className="!min-h-[3.35rem] !px-10 !text-[15px]">
-                Shop the edit
+                Explore the shop
               </Button>
             </Link>
             <Link to="/shop?category=gift-packages">
@@ -225,6 +227,15 @@ export function HomeScreen() {
                 Gift boxes
               </Button>
             </Link>
+            {showInstallButton && (
+              <button
+                type="button"
+                onClick={() => tapInstall()}
+                className="w-full min-[480px]:w-auto rounded-2xl border border-ink/15 bg-white/40 px-8 py-3 text-[15px] font-semibold text-ink shadow-sm backdrop-blur-sm transition hover:bg-white/60 dark:border-cream/15 dark:bg-dark-elevated/40 dark:text-cream dark:hover:bg-dark-elevated/65 sm:!min-h-[3.35rem]"
+              >
+                Download app
+              </button>
+            )}
           </div>
         </motion.div>
 
