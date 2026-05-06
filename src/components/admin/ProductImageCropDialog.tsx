@@ -166,7 +166,7 @@ export function ProductImageCropDialog({
             Crop & size photo
           </h2>
           <p className="mt-0.5 text-xs text-muted dark:text-dark-muted">
-            Drag the photo into place, zoom with slider or pinch/scroll — then confirm to add it to the product.
+            Drag the photo into place, zoom with slider or pinch/scroll, then confirm to add it to the product.
           </p>
         </header>
 
@@ -251,7 +251,7 @@ export function ProductImageCropDialog({
 
           <div className="space-y-1.5">
             <label className="flex justify-between text-xs font-semibold uppercase tracking-wide text-muted dark:text-dark-muted">
-              <span>Max saved size — longer edge</span>
+              <span>Max saved size, longer edge</span>
               <span>{maxEdge}px</span>
             </label>
             <input
@@ -266,7 +266,7 @@ export function ProductImageCropDialog({
             />
             <p className="text-[11px] text-muted dark:text-dark-muted">
               Smaller values keep uploads lighter. Images are compressed and sent
-              to Supabase Storage — not stored as base64.
+              to Supabase Storage, not stored as base64.
             </p>
           </div>
         </div>

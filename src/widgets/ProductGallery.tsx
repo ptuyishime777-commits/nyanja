@@ -43,7 +43,7 @@ export function ProductGallery({ product }: { product: Product }) {
         >
           <ProductImage
             src={product.images[imgIndex]}
-            alt={`${product.name} — photo ${imgIndex + 1} of ${product.images.length}`}
+            alt={`${product.name} photo ${imgIndex + 1} of ${product.images.length}`}
             aspectRatio="4/5"
             sizes="(max-width: 1024px) 92vw, (max-width: 1536px) 45vw, 36rem"
             priority={imgIndex === 0}

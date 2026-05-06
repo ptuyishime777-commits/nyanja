@@ -32,19 +32,6 @@ export function ProductScreen() {
   const [giftMessage, setGiftMessage] = useState('')
   const [addedHint, setAddedHint] = useState(false)
 
-  const defaultReviews = useMemo(
-    () => [
-      {
-        id: 'd1',
-        author: 'A happy customer',
-        rating: 5,
-        text: 'Beautiful quality and thoughtful packaging. Will order again.',
-        date: '2026-01-20',
-      },
-    ],
-    [],
-  )
-
   const inCartQty = useMemo(
     () =>
       product
@@ -80,7 +67,7 @@ export function ProductScreen() {
     )
   }
 
-  const reviews = product.reviews?.length ? product.reviews : defaultReviews
+  const reviews = product.reviews ?? []
   const hasDiscount =
     product.compareAtRwf != null && product.compareAtRwf > product.priceRwf
 
@@ -114,9 +101,9 @@ export function ProductScreen() {
   }
 
   const trustPills = [
-    { t: 'Verified reviews' },
     { t: 'Secure checkout' },
     { t: 'Gift-ready packaging' },
+    { t: 'Packed with care' },
   ]
 
   return (
@@ -272,23 +259,29 @@ export function ProductScreen() {
             <h2 className="font-display text-2xl font-semibold text-ink dark:text-cream">
               Reviews
             </h2>
-            <ul className="mt-8 space-y-8">
-              {reviews.map((r) => (
-                <li key={r.id}>
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="font-medium text-ink dark:text-cream">{r.author}</span>
-                    <span className="text-xs text-muted dark:text-dark-muted">{r.date}</span>
-                  </div>
-                  <p className="mt-1.5 text-sm text-rose-deep dark:text-rose">
-                    {'★'.repeat(r.rating)}
-                    {'☆'.repeat(5 - r.rating)}
-                  </p>
-                  <p className="mt-2 text-sm leading-relaxed text-muted dark:text-dark-muted">
-                    {r.text}
-                  </p>
-                </li>
-              ))}
-            </ul>
+            {reviews.length > 0 ? (
+              <ul className="mt-8 space-y-8">
+                {reviews.map((r) => (
+                  <li key={r.id}>
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="font-medium text-ink dark:text-cream">{r.author}</span>
+                      <span className="text-xs text-muted dark:text-dark-muted">{r.date}</span>
+                    </div>
+                    <p className="mt-1.5 text-sm text-rose-deep dark:text-rose">
+                      {'★'.repeat(r.rating)}
+                      {'☆'.repeat(5 - r.rating)}
+                    </p>
+                    <p className="mt-2 text-sm leading-relaxed text-muted dark:text-dark-muted">
+                      {r.text}
+                    </p>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="mt-8 text-sm leading-relaxed text-muted dark:text-dark-muted">
+                No reviews yet. After your order arrives, you can leave one from your dashboard.
+              </p>
+            )}
           </section>
         </div>
       </div>

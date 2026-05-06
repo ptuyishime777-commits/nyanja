@@ -211,7 +211,7 @@ export function HomeScreen() {
             Gifts they&apos;ll remember.
           </h1>
           <p className="mx-auto mt-6 max-w-sm text-pretty text-sm leading-relaxed text-muted md:text-base dark:text-dark-muted">
-            Curated packages &amp; fashion — delivered with care across Rwanda.
+            Curated packages &amp; fashion, delivered with care across Rwanda.
           </p>
           <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
             <Link to="/shop">

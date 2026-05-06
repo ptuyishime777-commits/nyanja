@@ -12,15 +12,8 @@ export function formatRwf(amount: number): string {
   return `${n} RWF`
 }
 
-export function deliveryFeeRwf(option: 'pickup' | 'standard' | 'express'): number {
-  switch (option) {
-    case 'pickup':
-      return 0
-    case 'standard':
-      return 3_000
-    case 'express':
-      return 8_000
-    default:
-      return 0
-  }
+/** Shoppers arrange carriers themselves; we do not add a delivery line item. */
+export function deliveryFeeRwf(_option: 'pickup' | 'standard' | 'express'): number {
+  void _option
+  return 0
 }

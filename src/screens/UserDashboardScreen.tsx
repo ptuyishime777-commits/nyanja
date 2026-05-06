@@ -55,7 +55,7 @@ function OrderLifecycleInline({ status }: { status: OrderStatus }) {
   if (status === 'cancelled') {
     return (
       <p className="text-[11px] font-semibold uppercase tracking-wide text-muted dark:text-dark-muted">
-        Tracking unavailable — order cancelled.
+        Tracking unavailable, order cancelled.
       </p>
     )
   }
@@ -187,7 +187,7 @@ export function UserDashboardScreen() {
           >
             {WHATSAPP_DISPLAY}
           </a>{' '}
-          to call — or use WhatsApp below.
+          to call, or use WhatsApp below.
         </p>
       </div>
 
@@ -260,11 +260,11 @@ export function UserDashboardScreen() {
           Your orders &amp; shipping
         </h2>
         <p className="mt-1 text-sm text-muted dark:text-dark-muted">
-          Staff update these stages in the admin portal — your view refreshes automatically.
+          Staff update these stages in the admin portal; your view refreshes automatically.
         </p>
         {recent.length === 0 ? (
           <p className="mt-4 text-sm text-muted dark:text-dark-muted">
-            No orders yet — your first gift is a tap away.
+            No orders yet. Your first gift is a tap away.
           </p>
         ) : (
           <ul className="mt-4 space-y-4">

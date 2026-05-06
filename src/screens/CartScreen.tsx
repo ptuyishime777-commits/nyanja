@@ -205,7 +205,7 @@ export function CartScreen() {
                     )}
                     {product.stockQuantity > 0 && product.stockQuantity < 5 && (
                       <p className="mt-2 text-xs font-medium text-amber-900/90 dark:text-amber-200/95">
-                        Low stock — only {product.stockQuantity} left in our
+                        Low stock, only {product.stockQuantity} left in our
                         boutique.
                       </p>
                     )}
@@ -248,7 +248,7 @@ export function CartScreen() {
             </h2>
 
             <p className="rounded-xl border border-rose/25 bg-rose/15 px-4 py-3 text-xs leading-relaxed text-ink/90 dark:border-rose/20 dark:bg-rose/10 dark:text-cream/95">
-              Every order is packed by hand. You&apos;ll receive a confirmation message before delivery — typically same-week in Kigali.
+              Every order is packed by hand.
             </p>
 
             <div className="space-y-2.5 text-sm">
@@ -263,9 +263,10 @@ export function CartScreen() {
                 </div>
               )}
               <div className="flex justify-between text-muted dark:text-dark-muted">
-                <span>Delivery</span>
-                <span className="max-w-[11rem] text-right text-xs leading-snug">
-                  Confirmed at checkout · from {formatRwf(0)} pickup
+                <span>Pickup / delivery</span>
+                <span className="max-w-[12rem] text-right text-xs leading-snug">
+                  Choose self pickup or your transporter at checkout. No delivery
+                  fee from us.
                 </span>
               </div>
             </div>

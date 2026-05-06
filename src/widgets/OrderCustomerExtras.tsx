@@ -164,7 +164,7 @@ export function OrderCustomerExtras({ order }: Props) {
             Rate your items
           </h2>
           <p className="mt-2 text-sm text-muted dark:text-dark-muted">
-            One rating per product — optional note with each star rating.
+            One rating per product, optional note with each star rating.
           </p>
           <div className="mt-5 space-y-5">
             {ratingRows.map((row, idx) => (

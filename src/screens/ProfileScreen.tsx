@@ -84,7 +84,7 @@ export function ProfileScreen() {
       {justOrdered && <CheckoutProgress step={3} />}
       {justOrdered && (
         <div className="rounded-[1.25rem] border border-rose/40 bg-rose/20 px-4 py-3 text-center text-sm font-medium text-ink dark:text-cream">
-          Thank you — your order is being prepared with care.
+          Thank you, your order is being prepared with care.
         </div>
       )}
 
@@ -208,7 +208,7 @@ export function ProfileScreen() {
             checked={theme === 'dark'}
             onChange={(v) => setTheme(v ? 'dark' : 'light')}
             label="Dark mode"
-            description="Warm charcoal tones — easy on the eyes at night."
+            description="Warm charcoal tones, easy on the eyes at night."
           />
 
           <Toggle

@@ -21,7 +21,7 @@ export function RegisterScreen() {
 
   const from = useMemo(() => {
     const raw = st?.from
-    return raw && raw !== '/login' && raw !== '/register' ? raw : '/dashboard'
+    return raw && raw !== '/login' && raw !== '/register' ? raw : '/'
   }, [st?.from])
 
   const [name, setName] = useState('')
@@ -64,7 +64,7 @@ export function RegisterScreen() {
           Register
         </h1>
         <p className="mt-3 text-sm text-muted dark:text-dark-muted">
-          Track each order through processing and shipping — your bag moves with
+          Track each order through processing and shipping. Your bag moves with
           you when you register.
         </p>
       </div>

@@ -35,7 +35,7 @@ export function LoginScreen() {
 
   const from = useMemo(() => {
     const raw = st?.from
-    return raw && raw !== '/login' && raw !== '/register' ? raw : '/dashboard'
+    return raw && raw !== '/login' && raw !== '/register' ? raw : '/'
   }, [st?.from])
 
   const [email, setEmail] = useState('')
@@ -96,7 +96,7 @@ export function LoginScreen() {
           Sign in with your email and password to open your dashboard.
         </p>
         <p className="mt-2 text-sm leading-relaxed text-ink/90 dark:text-cream/95">
-          Track each order through processing and shipping — your bag moves with
+          Track each order through processing and shipping. Your bag moves with
           you when you register.
         </p>
       </div>

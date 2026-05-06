@@ -110,7 +110,7 @@ function AdminDeliveryEditor({
           className="text-[10px] font-semibold uppercase tracking-wider text-muted dark:text-dark-muted"
           htmlFor={`dname-${orderId}`}
         >
-          Delivery person — name
+          Delivery person (name)
         </label>
         <Input
           id={`dname-${orderId}`}

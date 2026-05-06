@@ -40,7 +40,7 @@ function newProductDraft(): Product {
     images: [],
     description: '',
     bundleItems: undefined,
-    rating: 4.5,
+    rating: 0,
     reviewCount: 0,
     popularity: 50,
     stockQuantity: 25,
@@ -192,7 +192,7 @@ export function AdminProductsScreen() {
     const queued = cropQueueRef.current.length
     const allowedAdd = Math.max(0, 12 - trimmed.length - queued)
     if (allowedAdd === 0) {
-      window.alert('Maximum 12 photos (including queued crops) — remove or finish cropping first.')
+      window.alert('Maximum 12 photos (including queued crops); remove or finish cropping first.')
       input.value = ''
       return
     }
@@ -611,7 +611,7 @@ export function AdminProductsScreen() {
                 >
                   {cropQueue.length === 1
                     ? 'Crop and confirm the queued photo (or discard it) before you can save.'
-                    : `${cropQueue.length} photos queued — confirm or discard each one before saving.`}
+                    : `${cropQueue.length} photos queued, confirm or discard each one before saving.`}
                 </div>
               ) : null}
               <div className="space-y-1.5">
@@ -899,7 +899,7 @@ export function AdminProductsScreen() {
                 <div className="relative py-5">
                   <div className="absolute inset-x-0 top-1/2 border-t border-ink/[0.1] dark:border-cream/[0.12]" aria-hidden />
                   <p className="relative mx-auto w-fit rounded-full bg-surface px-5 py-1 text-center text-[11px] font-medium text-muted italic dark:bg-dark-surface dark:text-dark-muted">
-                    — or paste image URLs —
+                    Or paste image URLs
                   </p>
                 </div>
 

@@ -6,13 +6,13 @@ import { OrderStatusBadge } from './OrderStatusBadge'
 function captionForStatus(order: PlacedOrder): string {
   switch (order.status) {
     case 'pending':
-      return "We've received your order — standby for fulfillment."
+      return "We've received your order. Standby for fulfillment."
     case 'processing':
       return 'Your items are in process.'
     case 'shipped':
       return 'Your parcel is on the way.'
     case 'delivered':
-      return 'Delivered — enjoy your gift.'
+      return 'Delivered, enjoy your gift.'
     case 'cancelled':
       return 'This order was cancelled.'
     default:

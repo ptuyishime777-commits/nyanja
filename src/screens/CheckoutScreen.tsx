@@ -1,9 +1,9 @@
-import { type FormEvent, useMemo, useState } from 'react'
+import { type FormEvent, useEffect, useMemo, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import type { DeliveryOption, PaymentMethod } from '../models/order'
 import { getProductById } from '../services/productQueries'
-import { deliveryFeeRwf, formatRwf } from '../services/currency'
-import { useAuthStore } from '../store/useAuthStore'
+import { formatRwf } from '../services/currency'
+import { getSessionUser, useAuthStore } from '../store/useAuthStore'
 import { useCatalogStore } from '../store/useCatalogStore'
 import { useHubStore } from '../store/useHubStore'
 import { Button } from '../widgets/Button'
@@ -21,12 +21,13 @@ export function CheckoutScreen() {
 
   const cart = useHubStore((s) => s.cart)
   const placeOrder = useAuthStore((s) => s.placeOrder)
+  const sessionUserId = useAuthStore((s) => s.sessionUserId)
 
   const [name, setName] = useState('')
   const [phone, setPhone] = useState('')
   const [address, setAddress] = useState('')
   const [notes, setNotes] = useState('')
-  const [delivery, setDelivery] = useState<DeliveryOption>('standard')
+  const [delivery, setDelivery] = useState<DeliveryOption>('pickup')
   const [payment, setPayment] = useState<PaymentMethod>('cod')
   const [checkoutError, setCheckoutError] = useState<string | null>(null)
 
@@ -49,8 +50,14 @@ export function CheckoutScreen() {
     return { subtotal, items }
   }, [cart])
 
-  const fee = deliveryFeeRwf(delivery)
-  const total = Math.max(0, subtotal + fee - discountRwf)
+  useEffect(() => {
+    if (!sessionUserId) return
+    const u = getSessionUser(useAuthStore.getState())
+    const n = u?.displayName?.trim()
+    if (n) setName((prev) => (prev.trim() === '' ? n : prev))
+  }, [sessionUserId])
+
+  const total = Math.max(0, subtotal - discountRwf)
 
   const submit = async (e: FormEvent) => {
     e.preventDefault()
@@ -84,9 +91,16 @@ export function CheckoutScreen() {
   }
 
   const deliveryOpts: { id: DeliveryOption; label: string; hint: string }[] = [
-    { id: 'pickup', label: 'Pickup — Kigali showroom', hint: 'No delivery fee' },
-    { id: 'standard', label: 'Standard delivery', hint: formatRwf(deliveryFeeRwf('standard')) },
-    { id: 'express', label: 'Express delivery', hint: formatRwf(deliveryFeeRwf('express')) },
+    {
+      id: 'pickup',
+      label: 'Self pickup',
+      hint: 'Collect from our showroom (no fee from us).',
+    },
+    {
+      id: 'standard',
+      label: 'Delivery',
+      hint: 'You arrange a transporter; pricing is between you and the carrier.',
+    },
   ]
 
   const payOpts: { id: PaymentMethod; label: string }[] = [
@@ -106,7 +120,7 @@ export function CheckoutScreen() {
               Checkout
             </h1>
             <p className="mt-3 max-w-md text-sm leading-relaxed text-muted dark:text-dark-muted">
-              Almost there — your details are encrypted in transit and never shared.
+              Almost there, your details are encrypted in transit and never shared.
             </p>
           </div>
 
@@ -270,10 +284,6 @@ export function CheckoutScreen() {
                 <span>−{formatRwf(discountRwf)}</span>
               </div>
             )}
-            <div className="flex justify-between text-muted dark:text-dark-muted">
-              <span>Delivery</span>
-              <span>{formatRwf(fee)}</span>
-            </div>
           </div>
 
           <div className="nyanja-card !bg-gradient-to-br from-rose/25 via-cream/35 to-white/90 dark:!from-rose/15 dark:!via-dark-elevated dark:!to-dark-surface">

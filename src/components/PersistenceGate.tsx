@@ -63,7 +63,7 @@ export function PersistenceGate({ children }: { children: ReactNode }) {
               products: structuredClone(SEED_PRODUCTS),
               catalogLoading: false,
               catalogError:
-                'Catalog is taking too long — showing bundled products until sync completes.',
+                'Catalog is taking too long, showing bundled products until sync completes.',
             })
           }
         }

@@ -21,7 +21,7 @@ export default defineConfig({
       manifest: {
         name: 'Nyanja Gift Hub RW',
         short_name: 'Nyanja',
-        description: 'Curated gifts from Rwanda — shop online with care.',
+        description: 'Curated gifts from Rwanda, shop online with care.',
         theme_color: '#E8B4B8',
         background_color: '#fdf8f9',
         display: 'standalone',
