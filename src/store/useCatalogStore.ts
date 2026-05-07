@@ -14,6 +14,11 @@ import {
   removeProductImageObjects,
 } from '../services/storage/productImageStorage'
 import { validateCartAgainstStock } from '../services/inventory'
+import {
+  clearBundledDeletionSuppressIds,
+  mergeRemoteCatalogWithBundled,
+  recordBundledCatalogDeletion,
+} from '../services/catalogBundledMerge'
 import { logDevOnly } from '../utils/userFacingMessage'
 
 export type FetchProductsOpts = {
@@ -151,7 +156,10 @@ export const useCatalogStore = create<CatalogState>((set, get) => ({
       set((s) => ({
         catalogLoading: true,
         catalogError: null,
-        products: s.products.length > 0 ? s.products : cloneSeed(),
+        products:
+          s.products.length > 0
+            ? s.products
+            : mergeRemoteCatalogWithBundled([]),
       }))
     }
 
@@ -162,7 +170,9 @@ export const useCatalogStore = create<CatalogState>((set, get) => ({
       if (!silent) {
         set({
           products:
-            get().products.length > 0 ? get().products : cloneSeed(),
+            get().products.length > 0
+              ? get().products
+              : mergeRemoteCatalogWithBundled([]),
           catalogLoading: false,
           catalogError: null,
         })
@@ -178,7 +188,7 @@ export const useCatalogStore = create<CatalogState>((set, get) => ({
       }
       if (!silent) {
         set({
-          products: cloneSeed(),
+          products: mergeRemoteCatalogWithBundled([]),
           catalogLoading: false,
           catalogError: null,
         })
@@ -187,7 +197,7 @@ export const useCatalogStore = create<CatalogState>((set, get) => ({
     }
 
     set({
-      products: res.products,
+      products: mergeRemoteCatalogWithBundled(res.products),
       catalogLoading: false,
       catalogError: null,
     })
@@ -307,6 +317,7 @@ export const useCatalogStore = create<CatalogState>((set, get) => ({
         console.warn('[catalog] could not delete product images from storage', stErr.message)
       }
     }
+    recordBundledCatalogDeletion(id)
     await get().fetchProducts({ silent: true })
     return had
   },
@@ -327,6 +338,7 @@ export const useCatalogStore = create<CatalogState>((set, get) => ({
       set({ products: prev, catalogMutationError: truncErr.message })
       return
     }
+    clearBundledDeletionSuppressIds()
     for (const p of seed) {
       const { error } = await upsertProductRemote(p)
       if (error) {
