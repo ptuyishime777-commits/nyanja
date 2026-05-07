@@ -257,6 +257,14 @@ export async function fetchProductsFromSupabase(): Promise<{
   return { ok: true, products, error: null }
 }
 
+function denormalisedProductSlug(product: Product): string {
+  const s = product.slug.trim()
+  if (s) return s
+  const id = product.id.trim()
+  if (id.startsWith('p-')) return `item-${id}`
+  return id || 'product'
+}
+
 export async function upsertProductRemote(product: Product) {
   if (!isSupabaseConfigured()) {
     return { error: new Error('Supabase is not configured.') }
@@ -264,8 +272,9 @@ export async function upsertProductRemote(product: Product) {
   return supabase.from('products').upsert(
     {
       id: product.id,
-      /** Denormalised column seen on older / customized DBs (`NOT NULL` without default). Source of truth remains `payload`. */
+      /** Denormalised columns on customized DBs (NOT NULL, no default). Source of truth: `payload`. */
       name: product.name.trim() || 'Product',
+      slug: denormalisedProductSlug(product),
       payload: product as unknown as Record<string, unknown>,
     },
     { onConflict: 'id' },
