@@ -264,6 +264,8 @@ export async function upsertProductRemote(product: Product) {
   return supabase.from('products').upsert(
     {
       id: product.id,
+      /** Denormalised column seen on older / customized DBs (`NOT NULL` without default). Source of truth remains `payload`. */
+      name: product.name.trim() || 'Product',
       payload: product as unknown as Record<string, unknown>,
     },
     { onConflict: 'id' },

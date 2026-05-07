@@ -27,6 +27,8 @@ import { ProductImage } from '../../widgets/ProductImage'
 import { TextArea } from '../../widgets/TextArea'
 import { Toggle } from '../../widgets/Toggle'
 
+const ADMIN_CATALOG_DEBUG = '[Nyanja][admin-catalog]'
+
 const CATEGORIES = Object.keys(CATEGORY_LABELS) as ProductCategory[]
 
 function newProductDraft(): Product {
@@ -55,6 +57,8 @@ export function AdminProductsScreen() {
   const upsertProduct = useCatalogStore((s) => s.upsertProduct)
   const deleteProductById = useCatalogStore((s) => s.deleteProductById)
   const resetToSeed = useCatalogStore((s) => s.resetToSeed)
+  const catalogMutationError = useCatalogStore((s) => s.catalogMutationError)
+  const clearCatalogMutationError = useCatalogStore((s) => s.clearCatalogMutationError)
 
   const [searchQ, setSearchQ] = useState('')
   const [categoryFilter, setCategoryFilter] = useState<ProductCategory | 'all'>('all')
@@ -98,14 +102,17 @@ export function AdminProductsScreen() {
   const isNew = draft.id === ''
 
   const openAdd = () => {
+    clearCatalogMutationError()
     setDraft(newProductDraft())
     setCropQueue([])
     setCropBatchTotal(0)
     setCropUploadPercent(null)
     setPanelOpen(true)
+    console.info(`${ADMIN_CATALOG_DEBUG} panel:open`, { mode: 'add' })
   }
 
   const openEdit = (p: Product) => {
+    clearCatalogMutationError()
     setCropQueue([])
     setCropBatchTotal(0)
     setCropUploadPercent(null)
@@ -115,6 +122,7 @@ export function AdminProductsScreen() {
       bundleItems: p.bundleItems ? [...p.bundleItems] : [],
     })
     setPanelOpen(true)
+    console.info(`${ADMIN_CATALOG_DEBUG} panel:open`, { mode: 'edit', id: p.id })
   }
 
   const removeImageAt = (idx: number) => {
@@ -285,6 +293,7 @@ export function AdminProductsScreen() {
     e.preventDefault()
 
     if (cropQueue.length > 0) {
+      console.warn(`${ADMIN_CATALOG_DEBUG} save:blocked`, { reason: 'crop_queue_nonempty' })
       window.alert(
         'Finish cropping each photo you queued (confirm or discard). You cannot save until every new image has been processed.',
       )
@@ -296,6 +305,10 @@ export function AdminProductsScreen() {
       .filter(Boolean)
 
     if (imageUrls.some((u) => u.startsWith('data:'))) {
+      console.warn(`${ADMIN_CATALOG_DEBUG} save:blocked`, {
+        reason: 'data_urls_forbidden',
+        imageCount: imageUrls.length,
+      })
       window.alert(
         'Embedded (data:) images are not allowed. Remove those lines or use photo upload / normal https URLs.',
       )
@@ -303,11 +316,19 @@ export function AdminProductsScreen() {
     }
 
     if (imageUrls.length === 0) {
+      console.warn(`${ADMIN_CATALOG_DEBUG} save:blocked`, { reason: 'no_images' })
       window.alert(
         'Add at least one photo using “Add photos”, or paste an image URL under Advanced.',
       )
       return
     }
+
+    console.info(`${ADMIN_CATALOG_DEBUG} save:start`, {
+      isNew,
+      name: draft.name.trim(),
+      imageCount: imageUrls.length,
+      supabaseConfigured: isSupabaseConfigured(),
+    })
 
     const bundleItems =
       draft.bundleItems
@@ -375,7 +396,12 @@ export function AdminProductsScreen() {
       }
     }
 
-    await upsertProduct(payload)
+    const result = await upsertProduct(payload)
+    if (!result.ok) {
+      console.error(`${ADMIN_CATALOG_DEBUG} save:FAILED`, result.error)
+      return
+    }
+    console.info(`${ADMIN_CATALOG_DEBUG} save:done`, { id: payload.id, slug: payload.slug })
     setPanelOpen(false)
   }
 
@@ -403,7 +429,7 @@ export function AdminProductsScreen() {
   return (
     <div className="space-y-8">
       <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
+        <div className="min-w-0">
           <h1 className="font-display text-3xl font-semibold tracking-tight md:text-4xl">
             Catalog
           </h1>
@@ -411,6 +437,19 @@ export function AdminProductsScreen() {
             Add, edit, or remove listings. Product data syncs to Supabase; photos upload to Storage
             (compressed JPEG) and are stored as URLs only.
           </p>
+          {catalogMutationError ? (
+            <div
+              role="alert"
+              className="mt-3 rounded-xl border border-red-400/55 bg-red-500/15 px-4 py-3 text-sm text-ink dark:border-red-500/35 dark:bg-red-500/10 dark:text-cream"
+            >
+              <p className="font-semibold">Could not save to Supabase</p>
+              <p className="mt-1 whitespace-pre-wrap break-words">{catalogMutationError}</p>
+              <p className="mt-2 text-xs text-muted dark:text-dark-muted">
+                Open the browser developer console and filter by “[Nyanja][admin-catalog]” for detailed
+                steps (blocked validation vs. remote error code).
+              </p>
+            </div>
+          ) : null}
         </div>
         <div className="flex flex-wrap gap-2">
           <Button type="button" variant="primary" className="!min-h-11" onClick={openAdd}>
@@ -677,6 +716,15 @@ export function AdminProductsScreen() {
                   {cropQueue.length === 1
                     ? 'Crop and confirm the queued photo (or discard it) before you can save.'
                     : `${cropQueue.length} photos queued, confirm or discard each one before saving.`}
+                </div>
+              ) : null}
+              {catalogMutationError ? (
+                <div
+                  role="alert"
+                  className="rounded-xl border border-red-400/55 bg-red-500/15 px-4 py-3 text-sm text-ink dark:border-red-500/35 dark:bg-red-500/10 dark:text-cream"
+                >
+                  <p className="font-semibold">Save failed</p>
+                  <p className="mt-1 whitespace-pre-wrap break-words">{catalogMutationError}</p>
                 </div>
               ) : null}
               <div className="space-y-1.5">

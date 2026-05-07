@@ -38,7 +38,11 @@ interface CatalogState {
     lines: CartLine[],
   ) => Promise<{ ok: true } | { ok: false; error: string }>
 
-  upsertProduct: (product: Product) => Promise<void>
+  clearCatalogMutationError: () => void
+
+  upsertProduct: (
+    product: Product,
+  ) => Promise<{ ok: true } | { ok: false; error: string }>
   /**
    * Appends a customer review and recomputes aggregate rating / count.
    * Optimistic local update; persists full product row to Supabase.
@@ -57,11 +61,30 @@ function cloneSeed(): Product[] {
   return structuredClone(SEED_PRODUCTS)
 }
 
+function logUpsertRemoteFailure(productId: string, err: unknown) {
+  const o = err as {
+    message?: string
+    code?: string
+    details?: string | null
+    hint?: string | null
+  }
+  console.warn('[Nyanja][admin-catalog] upsert:remote_failed', {
+    productId,
+    message: o?.message ?? String(err),
+    code: o?.code,
+    details: o?.details,
+    hint: o?.hint,
+  })
+}
+
 export const useCatalogStore = create<CatalogState>((set, get) => ({
   products: [],
   catalogLoading: false,
   catalogError: null,
   catalogMutationError: null,
+
+  clearCatalogMutationError: () =>
+    set({ catalogMutationError: null }),
 
   validateCartStock: (cart) =>
     validateCartAgainstStock(cart, get().products),
@@ -172,11 +195,11 @@ export const useCatalogStore = create<CatalogState>((set, get) => ({
 
   upsertProduct: async (product) => {
     if (!isSupabaseConfigured()) {
-      set({
-        catalogMutationError:
-          'Supabase is not configured. Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY.',
-      })
-      return
+      const msg =
+        'Supabase is not configured. Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY.'
+      set({ catalogMutationError: msg })
+      console.warn('[Nyanja][admin-catalog] upsert:blocked', { reason: msg })
+      return { ok: false as const, error: msg }
     }
     const prev = get().products
     set((s) => {
@@ -188,12 +211,29 @@ export const useCatalogStore = create<CatalogState>((set, get) => ({
       next[i] = product
       return { products: next, catalogMutationError: null }
     })
+    console.info('[Nyanja][admin-catalog] upsert:start', {
+      id: product.id,
+      slug: product.slug,
+      name: product.name,
+      imageCount: product.images?.length ?? 0,
+      isNewInList: !prev.some((p) => p.id === product.id),
+    })
     const { error } = await upsertProductRemote(product)
     if (error) {
-      set({ products: prev, catalogMutationError: error.message })
-      return
+      logUpsertRemoteFailure(product.id, error)
+      const message = error.message ?? 'Product could not be saved.'
+      set({ products: prev, catalogMutationError: message })
+      return { ok: false as const, error: message }
     }
+    console.info('[Nyanja][admin-catalog] upsert:remote_ok', {
+      id: product.id,
+    })
     await get().fetchProducts({ silent: true })
+    console.info('[Nyanja][admin-catalog] upsert:after_silent_refetch', {
+      productCount: get().products.length,
+    })
+    set({ catalogMutationError: null })
+    return { ok: true as const }
   },
 
   appendProductReview: async (productId, review) => {
