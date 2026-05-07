@@ -1,6 +1,7 @@
 import type { CartLine } from '../../models/cart'
 import type { PlacedOrder } from '../../models/order'
 import type { Product } from '../../models/product'
+import { SEED_PRODUCTS } from '../../data/products'
 import { mergeProductStockFromPayload } from '../inventory'
 import type { AuthUser, UserBucket } from '../../models/user'
 import { isSupabaseConfigured, supabase } from '../../lib/supabaseClient'
@@ -23,6 +24,23 @@ export type OrderRow = {
   created_at: string
 }
 
+const seedById = new Map(SEED_PRODUCTS.map((p) => [p.id, p]))
+const seedBySlug = new Map(SEED_PRODUCTS.map((p) => [p.slug, p]))
+
+function normalizeOrdersPayloadError(error: { message: string } | null) {
+  if (!error) return null
+  const msg = error.message.toLowerCase()
+  if (
+    msg.includes("could not find the 'payload' column of 'orders'") ||
+    (msg.includes('orders') && msg.includes('payload') && msg.includes('schema cache'))
+  ) {
+    return new Error(
+      "Database schema is outdated: missing 'orders.payload'. Run the latest Supabase migrations, then retry checkout.",
+    )
+  }
+  return error
+}
+
 function isCartLineArray(v: unknown): v is CartLine[] {
   return Array.isArray(v) && v.every(
     (x) =>
@@ -42,7 +60,14 @@ export function mapPayloadToProduct(row: { id: string; payload: unknown }): Prod
   if (!p || typeof p !== 'object') return null
   const o = p as Product
   if (typeof o.id !== 'string' || typeof o.slug !== 'string') return null
-  return mergeProductStockFromPayload(o)
+  const fallback =
+    seedById.get(o.id) ??
+    seedBySlug.get(o.slug)
+  const images =
+    Array.isArray(o.images) && o.images.some((x) => typeof x === 'string' && x.trim() !== '')
+      ? o.images
+      : (fallback?.images ?? [])
+  return mergeProductStockFromPayload({ ...o, images })
 }
 
 export function profileRowToAuthUser(row: {
@@ -199,19 +224,21 @@ export async function persistHubToProfile(userId: string, cart: CartLine[], wish
 
 export async function insertOrderRemote(order: PlacedOrder) {
   if (!isSupabaseConfigured()) return { error: new Error('Supabase is not configured.') }
-  return supabase.from('orders').insert({
+  const { error } = await supabase.from('orders').insert({
     id: order.id,
     user_id: order.userId,
     payload: order as unknown as Record<string, unknown>,
   })
+  return { error: normalizeOrdersPayloadError(error) }
 }
 
 export async function updateOrderPayloadRemote(orderId: string, payload: PlacedOrder) {
   if (!isSupabaseConfigured()) return { error: new Error('Supabase is not configured.') }
-  return supabase
+  const { error } = await supabase
     .from('orders')
     .update({ payload: payload as unknown as Record<string, unknown> })
     .eq('id', orderId)
+  return { error: normalizeOrdersPayloadError(error) }
 }
 
 export async function updateProfileFlagsRemote(
