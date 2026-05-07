@@ -265,6 +265,11 @@ function denormalisedProductSlug(product: Product): string {
   return id || 'product'
 }
 
+function denormalisedPriceRwf(product: Product): number {
+  const n = Number(product.priceRwf)
+  return Math.max(0, Math.round(Number.isFinite(n) ? n : 0))
+}
+
 export async function upsertProductRemote(product: Product) {
   if (!isSupabaseConfigured()) {
     return { error: new Error('Supabase is not configured.') }
@@ -275,6 +280,7 @@ export async function upsertProductRemote(product: Product) {
       /** Denormalised columns on customized DBs (NOT NULL, no default). Source of truth: `payload`. */
       name: product.name.trim() || 'Product',
       slug: denormalisedProductSlug(product),
+      price_rwf: denormalisedPriceRwf(product),
       payload: product as unknown as Record<string, unknown>,
     },
     { onConflict: 'id' },
