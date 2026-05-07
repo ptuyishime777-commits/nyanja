@@ -1,7 +1,12 @@
 import type { ComponentType } from 'react'
+import { useMemo } from 'react'
 import { motion } from 'framer-motion'
 import { Link } from 'react-router-dom'
-import { CATEGORY_LABELS, type ProductCategory } from '../models/product'
+import {
+  CATEGORY_LABELS,
+  type Product,
+  type ProductCategory,
+} from '../models/product'
 import { usePwaInstall } from '../context/PwaInstallContext'
 import { useCatalogStore } from '../store/useCatalogStore'
 import { Button } from '../widgets/Button'
@@ -181,11 +186,33 @@ const homeCategoryTiles: {
   },
 ]
 
+function byPopularity(a: Product, b: Product): number {
+  return b.popularity - a.popularity
+}
+
 export function HomeScreen() {
   const { showInstallButton, tapInstall } = usePwaInstall()
   const products = useCatalogStore((s) => s.products)
-  const featured = products.filter((p) => p.featured)
-  const trending = products.filter((p) => p.trending)
+  const catalogLoading = useCatalogStore((s) => s.catalogLoading)
+  const catalogError = useCatalogStore((s) => s.catalogError)
+
+  const featured = useMemo(() => {
+    const tagged = products.filter((p) => p.featured)
+    if (tagged.length > 0) return tagged
+    return [...products].sort(byPopularity).slice(0, 4)
+  }, [products])
+
+  const trending = useMemo(() => {
+    const tagged = products.filter((p) => p.trending)
+    if (tagged.length > 0) return tagged
+    const exclude = new Set(featured.map((p) => p.id))
+    const rest = products.filter((p) => !exclude.has(p.id))
+    const picks =
+      rest.length > 0
+        ? [...rest].sort(byPopularity).slice(0, 8)
+        : [...products].sort(byPopularity).slice(0, 8)
+    return picks
+  }, [products, featured])
 
   return (
     <div>
@@ -267,6 +294,16 @@ export function HomeScreen() {
       </section>
 
       <div className="mt-14 space-y-14 md:mt-16 md:space-y-16">
+        {catalogLoading && products.length === 0 && (
+          <p className="text-center text-sm text-muted dark:text-dark-muted" role="status">
+            Loading catalog…
+          </p>
+        )}
+        {catalogError && products.length === 0 && !catalogLoading && (
+          <p className="text-center text-sm text-red-700 dark:text-red-200" role="alert">
+            {catalogError}
+          </p>
+        )}
         <section className="space-y-5">
           <SectionHeader
             eyebrow="Handpicked"
@@ -280,16 +317,32 @@ export function HomeScreen() {
               </Link>
             }
           />
-          <FeaturedSpotlight products={featured} />
+          {featured.length > 0 ? (
+            <FeaturedSpotlight products={featured} />
+          ) : (
+            <p className="rounded-2xl border border-ink/10 bg-cream/30 px-4 py-10 text-center text-sm text-muted dark:border-cream/10 dark:bg-dark-elevated/50 dark:text-dark-muted">
+              {products.length === 0
+                ? 'No products yet. Use the admin catalog to add listings, or check your Supabase catalog permissions.'
+                : 'No spotlight picks to show.'}
+            </p>
+          )}
         </section>
 
         <section>
           <SectionHeader eyebrow="Most loved" title="Trending now" />
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 lg:gap-6">
-            {trending.map((p, i) => (
-              <ProductCard key={p.id} product={p} index={i} />
-            ))}
-          </div>
+          {trending.length > 0 ? (
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 lg:gap-6">
+              {trending.map((p, i) => (
+                <ProductCard key={p.id} product={p} index={i} />
+              ))}
+            </div>
+          ) : (
+            <p className="rounded-2xl border border-ink/10 bg-cream/30 px-4 py-10 text-center text-sm text-muted dark:border-cream/10 dark:bg-dark-elevated/50 dark:text-dark-muted">
+              {products.length === 0
+                ? 'Trending picks appear here once products are available.'
+                : 'No trending picks to show.'}
+            </p>
+          )}
         </section>
       </div>
     </div>

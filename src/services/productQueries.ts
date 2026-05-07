@@ -36,7 +36,11 @@ export function filterProducts(
   if (opts.category !== 'all') {
     out = out.filter((p) => p.category === opts.category)
   }
-  out = out.filter((p) => p.priceRwf <= opts.maxPrice)
+  out = out.filter((p) => {
+    const price = Number(p.priceRwf)
+    if (!Number.isFinite(price)) return true
+    return price <= opts.maxPrice
+  })
   switch (opts.sort) {
     case 'price-asc':
       out.sort((a, b) => a.priceRwf - b.priceRwf)

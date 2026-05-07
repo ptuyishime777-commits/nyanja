@@ -13,7 +13,8 @@ import { Input } from '../widgets/Input'
 import { ProductCard } from '../widgets/ProductCard'
 import { SectionHeader } from '../widgets/SectionHeader'
 
-const MAX_PRICE = 40_000
+/** Upper bound for the price slider (Rwf). Default filter must include premium items. */
+const PRICE_SLIDER_MAX = 10_000_000
 
 const FILTER_TABS: readonly (ProductCategory | 'all')[] = [
   'all',
@@ -38,7 +39,7 @@ export function ShopScreen() {
   }
 
   const [q, setQ] = useState('')
-  const [maxPrice, setMaxPrice] = useState(MAX_PRICE)
+  const [maxPrice, setMaxPrice] = useState(PRICE_SLIDER_MAX)
   const [sort, setSort] = useState<SortKey>('popular')
 
   const filtered = useMemo(
@@ -95,8 +96,8 @@ export function ShopScreen() {
             <span className="shrink-0 font-medium text-ink dark:text-cream">Max price</span>
             <input
               type="range"
-              min={10000}
-              max={MAX_PRICE}
+              min={5000}
+              max={PRICE_SLIDER_MAX}
               step={1000}
               value={maxPrice}
               onChange={(e) => setMaxPrice(Number(e.target.value))}

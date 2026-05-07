@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom'
 import type { Product } from '../models/product'
 import { Button } from './Button'
 import { PriceDisplay } from './PriceDisplay'
-import { ProductImage } from './ProductImage'
+import { ProductImage, PRODUCT_IMAGE_PLACEHOLDER } from './ProductImage'
 
 const INTERVAL_MS = 5500
 
@@ -37,7 +37,7 @@ export function FeaturedSpotlight({ products }: { products: Product[] }) {
           >
             <ProductImage
               fill
-              src={current.images[0]}
+              src={current.images[0] ?? PRODUCT_IMAGE_PLACEHOLDER}
               alt={current.name}
               priority
               sizes="(max-width: 640px) 100vw, (max-width: 1024px) 90vw, 72rem"

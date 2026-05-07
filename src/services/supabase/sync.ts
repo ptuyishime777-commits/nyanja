@@ -1,6 +1,6 @@
 import type { CartLine } from '../../models/cart'
 import type { PlacedOrder } from '../../models/order'
-import type { Product } from '../../models/product'
+import type { Product, ProductCategory } from '../../models/product'
 import { SEED_PRODUCTS } from '../../data/products'
 import { mergeProductStockFromPayload } from '../inventory'
 import type { AuthUser, UserBucket } from '../../models/user'
@@ -55,19 +55,154 @@ function isWishlistIds(v: unknown): v is string[] {
   return Array.isArray(v) && v.every((x) => typeof x === 'string')
 }
 
-export function mapPayloadToProduct(row: { id: string; payload: unknown }): Product | null {
-  const p = row.payload
-  if (!p || typeof p !== 'object') return null
-  const o = p as Product
-  if (typeof o.id !== 'string' || typeof o.slug !== 'string') return null
+const VALID_CATEGORIES = new Set<ProductCategory>([
+  'gift-packages',
+  'clothes',
+  'shoes',
+  'accessories',
+])
+
+function coerceNullableString(v: unknown): string | undefined {
+  if (v == null) return undefined
+  if (typeof v === 'string') return v
+  return String(v)
+}
+
+export function mapPayloadToProduct(row: {
+  id: unknown
+  payload: unknown
+}): Product | null {
+  const tableId = coerceNullableString(row.id)?.trim() ?? ''
+  const raw =
+    row.payload != null && typeof row.payload === 'object'
+      ? (row.payload as Record<string, unknown>)
+      : {}
+
+  const idRaw = coerceNullableString(raw.id)?.trim()
+  const id = idRaw || tableId
+  if (!id) return null
+
+  const slugCandidate = coerceNullableString(raw.slug)?.trim() ?? ''
+
   const fallback =
-    seedById.get(o.id) ??
-    seedBySlug.get(o.slug)
+    seedById.get(id) ??
+    seedBySlug.get(slugCandidate) ??
+    (tableId !== id ? seedById.get(tableId) : undefined)
+
+  const slug =
+    slugCandidate ||
+    fallback?.slug ||
+    (id.startsWith('p-') ? `item-${id}` : id)
+
+  const rawName = coerceNullableString(raw.name)?.trim() ?? ''
+  const name =
+    rawName.length > 0 ? rawName : fallback?.name ?? 'Product'
+
+  const categoryRaw = raw.category ?? fallback?.category
+  const category =
+    typeof categoryRaw === 'string' && VALID_CATEGORIES.has(categoryRaw as ProductCategory)
+      ? (categoryRaw as ProductCategory)
+      : fallback?.category ?? 'gift-packages'
+
+  const priceRaw =
+    raw.priceRwf ?? raw.price_rwf ?? fallback?.priceRwf ?? 0
+  const priceNum =
+    typeof priceRaw === 'number' && Number.isFinite(priceRaw)
+      ? priceRaw
+      : Number(priceRaw)
+  const priceRwf = Math.max(0, Math.round(Number.isFinite(priceNum) ? priceNum : 0))
+
+  const description =
+    coerceNullableString(raw.description) ?? fallback?.description ?? ''
+
+  const imagesFromPayload: string[] = Array.isArray(raw.images)
+    ? raw.images.filter(
+        (x): x is string => typeof x === 'string' && x.trim() !== '',
+      )
+    : []
   const images =
-    Array.isArray(o.images) && o.images.some((x) => typeof x === 'string' && x.trim() !== '')
-      ? o.images
+    imagesFromPayload.length > 0
+      ? imagesFromPayload
       : (fallback?.images ?? [])
-  return mergeProductStockFromPayload({ ...o, images })
+
+  const stockRaw =
+    raw.stockQuantity ?? raw.stock_qty ?? fallback?.stockQuantity ?? 100
+  const stockNum =
+    typeof stockRaw === 'number' && Number.isFinite(stockRaw)
+      ? stockRaw
+      : Number(stockRaw)
+  const stockQuantity = Math.max(
+    0,
+    Math.round(Number.isFinite(stockNum) ? stockNum : 0),
+  )
+
+  const ratingRaw = raw.rating ?? fallback?.rating ?? 0
+  const ratingNum =
+    typeof ratingRaw === 'number' && Number.isFinite(ratingRaw)
+      ? ratingRaw
+      : Number(ratingRaw)
+  const rating = Math.min(
+    5,
+    Math.max(0, Number.isFinite(ratingNum) ? ratingNum : 0),
+  )
+
+  const reviewCountRaw = raw.reviewCount ?? raw.review_count ?? fallback?.reviewCount ?? 0
+  const reviewNum =
+    typeof reviewCountRaw === 'number' && Number.isFinite(reviewCountRaw)
+      ? reviewCountRaw
+      : Number(reviewCountRaw)
+  const reviewCount = Math.max(
+    0,
+    Math.round(Number.isFinite(reviewNum) ? reviewNum : 0),
+  )
+
+  const popularityRaw = raw.popularity ?? fallback?.popularity ?? 50
+  const popNum =
+    typeof popularityRaw === 'number' && Number.isFinite(popularityRaw)
+      ? popularityRaw
+      : Number(popularityRaw)
+  const popularity = Math.min(
+    100,
+    Math.max(0, Math.round(Number.isFinite(popNum) ? popNum : 50)),
+  )
+
+  const next: Product = {
+    id,
+    slug,
+    name,
+    category,
+    priceRwf,
+    description,
+    images,
+    rating,
+    reviewCount,
+    popularity,
+    stockQuantity,
+  }
+
+  const compareRaw = raw.compareAtRwf ?? raw.compare_at_rwf
+  if (typeof compareRaw === 'number' && Number.isFinite(compareRaw) && compareRaw > priceRwf) {
+    next.compareAtRwf = Math.round(compareRaw)
+  } else if (
+    fallback?.compareAtRwf != null &&
+    fallback.compareAtRwf > priceRwf
+  ) {
+    next.compareAtRwf = fallback.compareAtRwf
+  }
+
+  if (raw.featured === true || fallback?.featured) next.featured = true
+  if (raw.trending === true || fallback?.trending) next.trending = true
+
+  if (Array.isArray(raw.bundleItems) && raw.bundleItems.length > 0) {
+    const lines = raw.bundleItems.filter(
+      (x): x is string => typeof x === 'string' && x.trim() !== '',
+    )
+    if (lines.length > 0) next.bundleItems = lines
+  } else if (fallback?.bundleItems?.length) {
+    next.bundleItems = fallback.bundleItems
+  }
+
+  return mergeProductStockFromPayload(next)
 }
 
 export function profileRowToAuthUser(row: {
