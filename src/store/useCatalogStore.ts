@@ -134,13 +134,17 @@ export const useCatalogStore = create<CatalogState>((set, get) => ({
       return
     }
 
-    /* Remote succeeded but zero rows → usually empty table or RLS hiding rows for anon key. */
+    /* Remote succeeded but zero rows → use bundled seed silently; admins seed via SQL or Admin. */
     if (res.products.length === 0) {
+      if (import.meta.env.DEV) {
+        console.warn(
+          '[Nyanja] Supabase returned no product rows; showing bundled sample catalog. Add rows to public.products and allow anon SELECT, or use Admin → restore seed.',
+        )
+      }
       set({
         products: cloneSeed(),
         catalogLoading: false,
-        catalogError:
-          'Live catalog is empty (Supabase returned no rows). Common causes: no rows in public.products, or SELECT is blocked by RLS for anonymous users. In SQL Editor fix policy: DROP old product select policies → CREATE POLICY products_select_anon ON public.products FOR SELECT USING (true); Grant usage on schema/table as needed—see repo supabase/migrations. Until then we are showing bundled sample products only.',
+        catalogError: null,
       })
       return
     }
