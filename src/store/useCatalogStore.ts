@@ -16,14 +16,18 @@ import {
 import { validateCartAgainstStock } from '../services/inventory'
 import { logDevOnly } from '../utils/userFacingMessage'
 
+export type FetchProductsOpts = {
+  /** No loading skeleton; empty API rows do not revert to bundled seed (keeps optimistic list). */
+  silent?: boolean
+}
+
 interface CatalogState {
   products: Product[]
   catalogLoading: boolean
   catalogError: string | null
   catalogMutationError: string | null
 
-  /** Loads the catalog from Supabase (or sets an error if misconfigured / request fails). */
-  fetchProducts: () => Promise<void>
+  fetchProducts: (opts?: FetchProductsOpts) => Promise<void>
 
   validateCartStock: (
     cart: CartLine[],
@@ -98,7 +102,7 @@ export const useCatalogStore = create<CatalogState>((set, get) => ({
       }
     } catch (e) {
       set({ products: prev })
-      await get().fetchProducts()
+      await get().fetchProducts({ silent: true })
       return {
         ok: false,
         error:
@@ -109,7 +113,8 @@ export const useCatalogStore = create<CatalogState>((set, get) => ({
     return { ok: true }
   },
 
-  fetchProducts: async () => {
+  fetchProducts: async (opts) => {
+    const silent = opts?.silent ?? false
     if (!isSupabaseConfigured()) {
       logDevOnly('Supabase env missing — using bundled catalog', null)
       set({
@@ -119,35 +124,42 @@ export const useCatalogStore = create<CatalogState>((set, get) => ({
       })
       return
     }
-    set((s) => ({
-      catalogLoading: true,
-      catalogError: null,
-      products: s.products.length > 0 ? s.products : cloneSeed(),
-    }))
+    if (!silent) {
+      set((s) => ({
+        catalogLoading: true,
+        catalogError: null,
+        products: s.products.length > 0 ? s.products : cloneSeed(),
+      }))
+    }
+
     const res = await fetchProductsFromSupabase()
+
     if (!res.ok) {
       logDevOnly('Catalog fetch failed', res.error)
-      set({
-        products:
-          get().products.length > 0 ? get().products : cloneSeed(),
-        catalogLoading: false,
-        catalogError: null,
-      })
+      if (!silent) {
+        set({
+          products:
+            get().products.length > 0 ? get().products : cloneSeed(),
+          catalogLoading: false,
+          catalogError: null,
+        })
+      }
       return
     }
 
-    /* Remote succeeded but zero rows → use bundled seed silently; admins seed via SQL or Admin. */
     if (res.products.length === 0) {
-      if (import.meta.env.DEV) {
+      if (import.meta.env.DEV && !silent) {
         console.warn(
-          '[Nyanja] Supabase returned no product rows; showing bundled sample catalog. Add rows to public.products and allow anon SELECT, or use Admin → restore seed.',
+          '[Nyanja] Supabase returned no product rows; showing bundled sample catalog.',
         )
       }
-      set({
-        products: cloneSeed(),
-        catalogLoading: false,
-        catalogError: null,
-      })
+      if (!silent) {
+        set({
+          products: cloneSeed(),
+          catalogLoading: false,
+          catalogError: null,
+        })
+      }
       return
     }
 
@@ -179,7 +191,9 @@ export const useCatalogStore = create<CatalogState>((set, get) => ({
     const { error } = await upsertProductRemote(product)
     if (error) {
       set({ products: prev, catalogMutationError: error.message })
+      return
     }
+    await get().fetchProducts({ silent: true })
   },
 
   appendProductReview: async (productId, review) => {
@@ -219,7 +233,9 @@ export const useCatalogStore = create<CatalogState>((set, get) => ({
     const { error } = await upsertProductRemote(updated)
     if (error) {
       set({ products: prev, catalogMutationError: error.message })
+      return
     }
+    await get().fetchProducts({ silent: true })
   },
 
   deleteProductById: async (id) => {
@@ -251,6 +267,7 @@ export const useCatalogStore = create<CatalogState>((set, get) => ({
         console.warn('[catalog] could not delete product images from storage', stErr.message)
       }
     }
+    await get().fetchProducts({ silent: true })
     return had
   },
 

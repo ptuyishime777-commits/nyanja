@@ -450,7 +450,72 @@ export function AdminProductsScreen() {
         </div>
       </div>
 
-      <div className="overflow-x-auto rounded-[1.25rem] border border-ink/8 bg-white/60 dark:border-cream/10 dark:bg-dark-surface/70">
+      <div className="md:hidden space-y-4">
+        {filteredSorted.length === 0 ? (
+          <p className="rounded-2xl border border-ink/10 bg-cream/30 px-4 py-10 text-center text-sm text-muted dark:border-cream/10 dark:bg-dark-elevated/50 dark:text-dark-muted">
+            No products match your filters.
+          </p>
+        ) : (
+          filteredSorted.map((p) => {
+            const slugPath = `/product/${p.slug}`
+            return (
+              <article
+                key={p.id}
+                className="nyanja-card space-y-4 p-4 shadow-sm dark:bg-dark-surface/80"
+              >
+                <div className="flex gap-3">
+                  <div className="relative h-16 w-14 shrink-0 overflow-hidden rounded-xl ring-1 ring-ink/10 dark:ring-cream/10">
+                    <ProductImage fill src={p.images[0] ?? ''} alt={p.name} sizes="56px" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="font-semibold text-ink dark:text-cream">{p.name}</p>
+                    <p className="mt-1 font-mono text-[11px] text-muted dark:text-dark-muted">
+                      #{p.id}
+                    </p>
+                    <p className="mt-2 text-xs text-muted dark:text-dark-muted">
+                      {CATEGORY_LABELS[p.category].label} · ★{' '}
+                      {p.rating.toFixed(1)} ({p.reviewCount})
+                    </p>
+                  </div>
+                </div>
+                <div className="flex flex-wrap items-center justify-between gap-2 border-t border-ink/8 pt-3 text-sm dark:border-cream/10">
+                  <span className="font-semibold tabular-nums">{formatRwf(p.priceRwf)}</span>
+                  <span
+                    className={`inline-flex rounded-full px-2.5 py-1 text-[11px] font-semibold tabular-nums ${
+                      p.stockQuantity <= 0
+                        ? 'border border-red-500/40 bg-red-500/10 text-red-800 dark:text-red-200'
+                        : 'border border-ink/10 bg-cream/50 text-ink dark:border-cream/15 dark:bg-dark-elevated dark:text-cream'
+                    }`}
+                  >
+                    Stock {p.stockQuantity}
+                  </span>
+                </div>
+                <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+                  <Button type="button" variant="ghost" className="!min-h-11 flex-1" onClick={() => openEdit(p)}>
+                    Edit
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="!min-h-11 flex-1 !border-red-600/55 !font-semibold !text-red-600 dark:!border-red-500/50 dark:!text-red-400"
+                    onClick={() => removeOne(p)}
+                  >
+                    Delete
+                  </Button>
+                  <Link
+                    to={slugPath}
+                    className="inline-flex min-h-11 flex-1 items-center justify-center rounded-xl border border-rose-deep/35 px-4 text-center text-sm font-semibold text-rose-deep dark:border-rose/40 dark:text-rose"
+                  >
+                    Store view
+                  </Link>
+                </div>
+              </article>
+            )
+          })
+        )}
+      </div>
+
+      <div className="hidden overflow-x-auto rounded-[1.25rem] border border-ink/8 bg-white/60 md:block dark:border-cream/10 dark:bg-dark-surface/70">
         <table className="w-full min-w-[800px] text-left text-sm">
           <thead>
             <tr className="border-b border-ink/8 text-[11px] font-semibold uppercase tracking-wider text-muted dark:border-cream/10 dark:text-dark-muted">
@@ -575,13 +640,13 @@ export function AdminProductsScreen() {
 
       {panelOpen && (
         <div
-          className="fixed inset-0 z-50 flex items-end justify-center bg-ink/40 p-4 backdrop-blur-sm sm:items-center dark:bg-black/55"
+          className="fixed inset-0 z-50 flex items-end justify-center bg-ink/40 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur-sm sm:items-center sm:p-4 dark:bg-black/55"
           role="dialog"
           aria-modal="true"
           aria-labelledby="admin-product-title"
         >
-          <div className="max-h-[min(92vh,760px)] w-full max-w-lg overflow-y-auto rounded-[1.5rem] border border-ink/10 bg-surface shadow-lift dark:border-cream/15 dark:bg-dark-surface md:max-h-[85vh]">
-            <div className="sticky top-0 z-10 flex items-start justify-between gap-3 border-b border-ink/8 bg-surface px-6 py-4 dark:border-cream/10 dark:bg-dark-surface">
+          <div className="max-h-[calc(100dvh-7rem-env(safe-area-inset-bottom))] w-full max-w-lg overflow-y-auto rounded-t-[1.5rem] border border-ink/10 bg-surface shadow-lift dark:border-cream/15 dark:bg-dark-surface sm:max-h-[min(92vh,760px)] sm:rounded-[1.5rem] md:max-h-[85vh]">
+            <div className="sticky top-0 z-10 flex items-start justify-between gap-3 border-b border-ink/8 bg-surface px-4 py-3 dark:border-cream/10 dark:bg-dark-surface sm:px-6 sm:py-4">
               <div>
                 <p className="text-[10px] font-semibold uppercase tracking-wider text-muted dark:text-dark-muted">
                   Catalog
@@ -603,7 +668,7 @@ export function AdminProductsScreen() {
               </Button>
             </div>
 
-            <form onSubmit={save} className="space-y-4 px-6 py-5">
+            <form onSubmit={save} className="space-y-4 px-4 py-4 sm:px-6 sm:py-5">
               {cropQueue.length > 0 ? (
                 <div
                   role="alert"

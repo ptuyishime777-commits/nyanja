@@ -39,6 +39,24 @@ export function PersistenceGate({ children }: { children: ReactNode }) {
     void useCatalogStore.getState().fetchProducts()
   }, [hubHydrated])
 
+  // 3b) Tab visible again — quietly resync catalog (admin edits, other tabs).
+  useEffect(() => {
+    if (!hubHydrated || !isSupabaseConfigured()) return
+    let debounce: ReturnType<typeof setTimeout> | undefined
+    const onVis = () => {
+      if (document.visibilityState !== 'visible') return
+      clearTimeout(debounce)
+      debounce = setTimeout(() => {
+        void useCatalogStore.getState().fetchProducts({ silent: true })
+      }, 400)
+    }
+    document.addEventListener('visibilitychange', onVis)
+    return () => {
+      document.removeEventListener('visibilitychange', onVis)
+      clearTimeout(debounce)
+    }
+  }, [hubHydrated])
+
   // 4) Session + profiles/orders: single listener, no getSession() on boot.
   //    Defer async work off the auth callback — awaiting inside the listener can stall
   //    signIn and block INITIAL_SESSION / SIGNED_IN from finishing (Supabase gotrue lock).

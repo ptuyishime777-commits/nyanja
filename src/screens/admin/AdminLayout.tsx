@@ -114,7 +114,7 @@ export function AdminLayout() {
             ))}
           </ul>
         </aside>
-        <main className="min-h-[calc(100dvh-7rem)] flex-1 p-4 pb-12 md:min-h-[calc(100dvh-4rem)] md:p-8">
+        <main className="min-h-[calc(100dvh-8rem)] flex-1 p-3 pb-16 sm:p-5 md:min-h-[calc(100dvh-4rem)] md:p-8">
           <Outlet />
         </main>
       </div>

@@ -104,7 +104,7 @@ function AdminDeliveryEditor({
   }, [live?.deliveryPersonName, live?.deliveryPersonPhone, orderId])
 
   return (
-    <div className="flex flex-wrap items-end gap-3">
+    <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
       <div className="min-w-[10rem] flex-1">
         <label
           className="text-[10px] font-semibold uppercase tracking-wider text-muted dark:text-dark-muted"
@@ -331,7 +331,83 @@ export function AdminOrdersScreen() {
         </div>
       </div>
 
-      <div className="overflow-x-auto rounded-[1.25rem] border border-ink/8 bg-white/60 dark:border-cream/10 dark:bg-dark-surface/70">
+      <div className="md:hidden space-y-4">
+        {filtered.length === 0 ? (
+          <p className="rounded-2xl border border-ink/10 bg-cream/30 px-4 py-10 text-center text-sm text-muted dark:border-cream/10 dark:bg-dark-elevated/50 dark:text-dark-muted">
+            No orders match these filters.
+          </p>
+        ) : (
+          filtered.map((r) => {
+            const pm = PAYMENT_PILLS[r.paymentMethod]
+            const itemCount = r.items.reduce((n, l) => n + l.quantity, 0)
+            return (
+              <article
+                key={r.rowKey}
+                className="nyanja-card space-y-4 p-4 shadow-sm dark:bg-dark-surface/80"
+              >
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <button
+                    type="button"
+                    className="text-left font-mono text-base font-semibold text-rose-deep underline-offset-2 hover:underline dark:text-rose"
+                    onClick={() => setDetailRow(r)}
+                  >
+                    {r.orderId}
+                  </button>
+                  <select
+                    aria-label={`Status for ${r.orderId}`}
+                    value={r.status}
+                    onChange={(e) =>
+                      void updateOrderStatus(r.orderId, e.target.value as OrderStatus)
+                    }
+                    className="min-h-11 max-w-[12rem] rounded-xl border border-ink/15 bg-surface px-3 py-2 text-xs font-semibold uppercase tracking-wide dark:border-cream/15 dark:bg-dark-elevated"
+                  >
+                    {STATUSES_ALL.map((st) => (
+                      <option key={st} value={st}>
+                        {STATUS_DISPLAY[st]}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <p className="font-semibold text-ink dark:text-cream">{r.customerName}</p>
+                  <p className="mt-1 break-all text-xs text-muted dark:text-dark-muted">{r.userEmail}</p>
+                  <p className="mt-1 text-xs text-muted dark:text-dark-muted">{r.customerPhone}</p>
+                </div>
+                <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
+                  <span className="text-muted dark:text-dark-muted">
+                    {new Date(r.createdAt).toLocaleString(undefined, {
+                      dateStyle: 'short',
+                      timeStyle: 'short',
+                    })}
+                  </span>
+                  <span className="font-semibold tabular-nums">{formatRwf(r.totalRwf)}</span>
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <span
+                    className={`inline-flex rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.06em] ${pm.className}`}
+                  >
+                    {pm.label}
+                  </span>
+                  <span className="rounded-full bg-cream/50 px-2.5 py-1 text-[11px] font-medium capitalize text-ink dark:bg-dark-elevated dark:text-cream">
+                    {r.deliveryOption}
+                  </span>
+                  <span className="text-[11px] text-muted dark:text-dark-muted">{itemCount} items</span>
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full !min-h-11"
+                  onClick={() => setDetailRow(r)}
+                >
+                  Full detail · delivery rider
+                </Button>
+              </article>
+            )
+          })
+        )}
+      </div>
+
+      <div className="hidden overflow-x-auto rounded-[1.25rem] border border-ink/8 bg-white/60 md:block dark:border-cream/10 dark:bg-dark-surface/70">
         <table className="w-full min-w-[720px] text-left text-sm">
           <thead>
             <tr className="border-b border-ink/8 text-[11px] font-semibold uppercase tracking-wider text-muted dark:border-cream/10 dark:text-dark-muted">
@@ -500,7 +576,7 @@ export function AdminOrdersScreen() {
 
       {detailRow ? (
         <div
-          className="fixed inset-0 z-50 flex items-end justify-center bg-ink/45 p-4 backdrop-blur-sm sm:items-center dark:bg-black/55"
+          className="fixed inset-0 z-50 flex items-end justify-center bg-ink/45 p-3 pb-[max(1rem,env(safe-area-inset-bottom))] backdrop-blur-sm sm:items-center sm:p-4 dark:bg-black/55"
           role="dialog"
           aria-modal="true"
           aria-labelledby="order-detail-title"
@@ -508,7 +584,7 @@ export function AdminOrdersScreen() {
             if (e.target === e.currentTarget) setDetailRow(null)
           }}
         >
-          <div className="max-h-[min(90vh,640px)] w-full max-w-md overflow-y-auto rounded-[1.25rem] border border-ink/10 bg-surface shadow-lift dark:border-cream/15 dark:bg-dark-surface">
+          <div className="max-h-[calc(100dvh-9rem-env(safe-area-inset-bottom))] w-full max-w-md overflow-y-auto rounded-t-[1.25rem] border border-ink/10 bg-surface shadow-lift dark:border-cream/15 dark:bg-dark-surface sm:max-h-[min(90vh,640px)] sm:rounded-[1.25rem]">
             <div className="flex items-start justify-between gap-4 border-b border-ink/8 px-6 py-4 dark:border-cream/10">
               <div>
                 <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted dark:text-dark-muted">

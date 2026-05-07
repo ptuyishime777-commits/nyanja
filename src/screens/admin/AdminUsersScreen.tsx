@@ -55,7 +55,86 @@ export function AdminUsersScreen() {
         </p>
       )}
 
-      <div className="overflow-x-auto rounded-[1.25rem] border border-ink/8 bg-white/60 dark:border-cream/10 dark:bg-dark-surface/70">
+      <div className="md:hidden space-y-3">
+        {rows.map((u) => {
+          const orders = buckets[u.id]?.orders.length ?? 0
+          const isSelf = u.id === sessionUserId
+          const initials = initialsForUser(u.displayName, u.email)
+          return (
+            <article
+              key={u.id}
+              className={`nyanja-card space-y-4 p-4 shadow-sm dark:bg-dark-surface/80 ${u.disabled ? 'opacity-65' : ''}`}
+            >
+              <div className="flex items-start gap-3">
+                <span
+                  className={
+                    u.role === 'admin'
+                      ? 'flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#1f1f1f] font-display text-[12px] font-semibold tracking-tight text-cream shadow-sm ring-1 ring-black/15 dark:bg-black dark:text-cream dark:ring-cream/10'
+                      : 'flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#eab4bc] font-display text-[12px] font-semibold tracking-tight text-[#2a2422] shadow-sm ring-1 ring-rose-deep/25 dark:bg-rose-deep/85 dark:text-ink dark:ring-rose/50'
+                  }
+                  aria-hidden
+                >
+                  {initials}
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="font-semibold text-ink dark:text-cream">{u.displayName}</p>
+                  {isSelf ? (
+                    <span className="text-xs font-normal text-muted dark:text-dark-muted"> (you)</span>
+                  ) : null}
+                  <p className="mt-1 break-all text-sm text-muted dark:text-dark-muted">{u.email}</p>
+                  <div className="mt-3 flex flex-wrap items-center gap-2">
+                    <RoleBadge role={u.role} />
+                    <span className="rounded-full bg-cream/50 px-2.5 py-1 text-[11px] font-medium text-ink dark:bg-dark-elevated dark:text-cream">
+                      {orders} orders
+                    </span>
+                  </div>
+                  <p className="mt-2 text-xs text-muted dark:text-dark-muted">
+                    Joined{' '}
+                    {new Date(u.createdAt).toLocaleDateString(undefined, {
+                      dateStyle: 'medium',
+                    })}
+                  </p>
+                </div>
+              </div>
+              <div className="flex flex-col gap-2 border-t border-ink/8 pt-3 dark:border-cream/10 sm:flex-row sm:flex-wrap">
+                <button
+                  type="button"
+                  className={`inline-flex min-h-11 flex-1 items-center justify-center rounded-xl border px-3 text-xs font-semibold transition ${
+                    u.disabled
+                      ? 'border-ink/[0.2] bg-transparent text-ink hover:border-rose/40 hover:bg-rose/15 dark:border-cream/25 dark:text-cream'
+                      : 'border-red-700/38 text-red-800 hover:bg-red-500/[0.08] dark:border-red-500/45 dark:text-red-200'
+                  }`}
+                  onClick={async () => {
+                    const next = !u.disabled
+                    const ok = await setUserDisabled(u.id, next)
+                    if (!ok) setToast('Cannot disable the only admin account.')
+                    else setToast(null)
+                  }}
+                >
+                  {u.disabled ? 'Enable' : 'Disable'}
+                </button>
+                <select
+                  aria-label={`Role for ${u.email}`}
+                  value={u.role}
+                  disabled={u.disabled}
+                  onChange={async (e) => {
+                    const next = e.target.value as UserRole
+                    const ok = await setUserRole(u.id, next)
+                    if (!ok) setToast('There must always be one active administrator.')
+                    else setToast(null)
+                  }}
+                  className="min-h-11 flex-1 rounded-xl border border-ink/15 bg-surface px-3 text-sm font-medium dark:border-cream/15 dark:bg-dark-elevated"
+                >
+                  <option value="customer">Customer</option>
+                  <option value="admin">Admin</option>
+                </select>
+              </div>
+            </article>
+          )
+        })}
+      </div>
+
+      <div className="hidden overflow-x-auto rounded-[1.25rem] border border-ink/8 bg-white/60 md:block dark:border-cream/10 dark:bg-dark-surface/70">
         <table className="w-full min-w-[720px] text-left text-sm">
           <thead>
             <tr className="border-b border-ink/8 text-[11px] font-semibold uppercase tracking-wider text-muted dark:border-cream/10 dark:text-dark-muted">

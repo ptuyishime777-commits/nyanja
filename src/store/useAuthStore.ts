@@ -385,7 +385,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           consumed.error ??
           'Order was placed but inventory could not be updated. Please contact support.',
       })
-      await useCatalogStore.getState().fetchProducts()
+      await useCatalogStore.getState().fetchProducts({ silent: true })
     }
 
     const { error: pErr } = await persistHubToProfile(
