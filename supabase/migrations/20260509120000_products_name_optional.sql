@@ -10,8 +10,8 @@ set name = trim(
     nullif(trim(coalesce(p.name, '')), ''),
     nullif(trim(coalesce(p.payload ->> 'name', '')), ''),
     trim(coalesce(p.id, '')),
-    'Product',
-  ),
+    'Product'
+  )
 )
 where p.name is null
    or trim(coalesce(p.name, '')) = '';
