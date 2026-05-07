@@ -270,6 +270,13 @@ function denormalisedPriceRwf(product: Product): number {
   return Math.max(0, Math.round(Number.isFinite(n) ? n : 0))
 }
 
+function denormalisedCategory(product: Product): ProductCategory {
+  return typeof product.category === 'string' &&
+    VALID_CATEGORIES.has(product.category as ProductCategory)
+    ? product.category
+    : 'gift-packages'
+}
+
 export async function upsertProductRemote(product: Product) {
   if (!isSupabaseConfigured()) {
     return { error: new Error('Supabase is not configured.') }
@@ -281,6 +288,7 @@ export async function upsertProductRemote(product: Product) {
       name: product.name.trim() || 'Product',
       slug: denormalisedProductSlug(product),
       price_rwf: denormalisedPriceRwf(product),
+      category: denormalisedCategory(product),
       payload: product as unknown as Record<string, unknown>,
     },
     { onConflict: 'id' },
