@@ -11,6 +11,7 @@ import { CheckoutProgress } from '../widgets/CheckoutProgress'
 import { Input } from '../widgets/Input'
 import { TextArea } from '../widgets/TextArea'
 import { ProductImage } from '../widgets/ProductImage'
+import { friendlyCheckoutError } from '../utils/userFacingMessage'
 
 type CheckoutLocationState = { discountRwf?: number }
 
@@ -73,7 +74,7 @@ export function CheckoutScreen() {
       discountRwf,
     })
     if (!res.ok) {
-      setCheckoutError(res.error)
+      setCheckoutError(friendlyCheckoutError(res.error))
       return
     }
     navigate('/profile', { replace: true, state: { justOrdered: true } })

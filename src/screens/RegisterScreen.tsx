@@ -1,6 +1,7 @@
 import { type FormEvent, useMemo, useState } from 'react'
 import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../store/useAuthStore'
+import { FRIENDLY_PROFILE_SYNC_FAIL } from '../utils/userFacingMessage'
 import { Button } from '../widgets/Button'
 import { Input } from '../widgets/Input'
 
@@ -20,7 +21,6 @@ export function RegisterScreen() {
   })
   const register = useAuthStore((s) => s.register)
 
-  const remoteError = useAuthStore((s) => s.remoteError)
   const hasProfile = useAuthStore((s) =>
     s.sessionUserId
       ? s.users.some((u) => u.id === s.sessionUserId)
@@ -49,28 +49,8 @@ export function RegisterScreen() {
   if (sessionUserId && !remoteLoading && !hasProfile) {
     return (
       <div className="mx-auto max-w-md space-y-4 py-16 text-center">
-        <p className="text-sm text-ink dark:text-cream">
-          Could not load your account data.
-          {remoteError ? ` ${remoteError}` : ' Check RLS policies or try again.'}
-        </p>
-        <Button
-          type="button"
-          variant="primary"
-          className="mx-auto"
-          onClick={() => useAuthStore.getState().logout()}
-        >
-          Sign out
-        </Button>
-      </div>
-    )
-  }
-
-  if (sessionUserId && !remoteLoading && !hasProfile) {
-    return (
-      <div className="mx-auto max-w-md space-y-4 py-16 text-center">
-        <p className="text-sm text-ink dark:text-cream">
-          Could not load your account data.
-          {remoteError ? ` ${remoteError}` : ' Check RLS policies or try again.'}
+        <p className="text-sm text-muted leading-relaxed dark:text-dark-muted">
+          {FRIENDLY_PROFILE_SYNC_FAIL}
         </p>
         <Button
           type="button"

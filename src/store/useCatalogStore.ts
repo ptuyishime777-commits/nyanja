@@ -14,6 +14,7 @@ import {
   removeProductImageObjects,
 } from '../services/storage/productImageStorage'
 import { validateCartAgainstStock } from '../services/inventory'
+import { logDevOnly } from '../utils/userFacingMessage'
 
 interface CatalogState {
   products: Product[]
@@ -110,11 +111,11 @@ export const useCatalogStore = create<CatalogState>((set, get) => ({
 
   fetchProducts: async () => {
     if (!isSupabaseConfigured()) {
+      logDevOnly('Supabase env missing — using bundled catalog', null)
       set({
         products: cloneSeed(),
         catalogLoading: false,
-        catalogError:
-          'Supabase is not configured. Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY.',
+        catalogError: null,
       })
       return
     }
@@ -125,11 +126,12 @@ export const useCatalogStore = create<CatalogState>((set, get) => ({
     }))
     const res = await fetchProductsFromSupabase()
     if (!res.ok) {
+      logDevOnly('Catalog fetch failed', res.error)
       set({
         products:
           get().products.length > 0 ? get().products : cloneSeed(),
         catalogLoading: false,
-        catalogError: res.error,
+        catalogError: null,
       })
       return
     }

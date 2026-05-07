@@ -194,7 +194,6 @@ export function HomeScreen() {
   const { showInstallButton, tapInstall } = usePwaInstall()
   const products = useCatalogStore((s) => s.products)
   const catalogLoading = useCatalogStore((s) => s.catalogLoading)
-  const catalogError = useCatalogStore((s) => s.catalogError)
 
   const featured = useMemo(() => {
     const tagged = products.filter((p) => p.featured)
@@ -299,18 +298,6 @@ export function HomeScreen() {
             Loading catalog…
           </p>
         )}
-        {catalogError && !catalogLoading && (
-          <div
-            role="alert"
-            className={`rounded-2xl border px-4 py-3 text-left text-sm leading-relaxed ${
-              products.length > 0
-                ? 'border-amber-400/55 bg-amber-50 text-amber-950 dark:border-amber-600/35 dark:bg-amber-950/35 dark:text-amber-50'
-                : 'border-red-400/55 bg-red-50 text-red-950 dark:border-red-500/35 dark:bg-red-950/40 dark:text-red-50'
-            }`}
-          >
-            {catalogError}
-          </div>
-        )}
         <section className="space-y-5">
           <SectionHeader
             eyebrow="Handpicked"
@@ -329,7 +316,7 @@ export function HomeScreen() {
           ) : (
             <p className="rounded-2xl border border-ink/10 bg-cream/30 px-4 py-10 text-center text-sm text-muted dark:border-cream/10 dark:bg-dark-elevated/50 dark:text-dark-muted">
               {products.length === 0
-                ? 'No products yet. Use the admin catalog to add listings, or check your Supabase catalog permissions.'
+                ? 'New arrivals will appear here soon.'
                 : 'No spotlight picks to show.'}
             </p>
           )}
@@ -346,7 +333,7 @@ export function HomeScreen() {
           ) : (
             <p className="rounded-2xl border border-ink/10 bg-cream/30 px-4 py-10 text-center text-sm text-muted dark:border-cream/10 dark:bg-dark-elevated/50 dark:text-dark-muted">
               {products.length === 0
-                ? 'Trending picks appear here once products are available.'
+                ? 'Favorites will show up here when the catalog updates.'
                 : 'No trending picks to show.'}
             </p>
           )}

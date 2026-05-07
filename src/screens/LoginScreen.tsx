@@ -10,6 +10,7 @@ import {
   isAdminUser,
   useAuthStore,
 } from '../store/useAuthStore'
+import { FRIENDLY_PROFILE_SYNC_FAIL } from '../utils/userFacingMessage'
 import { Button } from '../widgets/Button'
 import { Input } from '../widgets/Input'
 
@@ -34,7 +35,6 @@ export function LoginScreen() {
     return !!(u && !u.disabled)
   })
 
-  const remoteError = useAuthStore((s) => s.remoteError)
   const hasProfile = useAuthStore((s) =>
     s.sessionUserId
       ? s.users.some((u) => u.id === s.sessionUserId)
@@ -62,9 +62,8 @@ export function LoginScreen() {
   if (sessionUserId && !remoteLoading && !hasProfile) {
     return (
       <div className="mx-auto max-w-md space-y-4 py-16 text-center">
-        <p className="text-sm text-ink dark:text-cream">
-          Could not load your account data.
-          {remoteError ? ` ${remoteError}` : ' Check RLS policies or try again.'}
+        <p className="text-sm text-muted leading-relaxed dark:text-dark-muted">
+          {FRIENDLY_PROFILE_SYNC_FAIL}
         </p>
         <Button
           type="button"

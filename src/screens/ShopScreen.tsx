@@ -25,7 +25,6 @@ export function ShopScreen() {
   const [params, setParams] = useSearchParams()
   const products = useCatalogStore((s) => s.products)
   const catalogLoading = useCatalogStore((s) => s.catalogLoading)
-  const catalogError = useCatalogStore((s) => s.catalogError)
   const catParam = params.get('category')
   const category: ProductCategory | 'all' =
     catParam && catParam in CATEGORY_LABELS
@@ -65,19 +64,6 @@ export function ShopScreen() {
           Updating catalog…
         </p>
       )}
-      {catalogError && !catalogLoading && (
-        <div
-          role="alert"
-          className={`rounded-2xl border px-4 py-3 text-sm leading-relaxed ${
-            products.length > 0
-              ? 'border-amber-400/55 bg-amber-50 text-amber-950 dark:border-amber-600/35 dark:bg-amber-950/35 dark:text-amber-50'
-              : 'border-red-400/55 bg-red-50 text-red-950 dark:border-red-500/35 dark:bg-red-950/40 dark:text-red-50'
-          }`}
-        >
-          {catalogError}
-        </div>
-      )}
-
       <div className="sticky top-[var(--header-bar-height)] z-20 -mx-4 border-b border-ink/6 bg-surface/90 px-4 py-3 backdrop-blur-md dark:border-cream/8 dark:bg-dark-bg/90 md:static md:z-0 md:mx-0 md:border-0 md:bg-transparent md:px-0 md:py-0">
         <Input
           value={q}
