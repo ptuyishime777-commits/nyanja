@@ -238,11 +238,22 @@ export async function fetchProductsFromSupabase(): Promise<{
 
   if (error) return { ok: false, products: [], error: error.message }
 
+  const rows = data ?? []
   const products: Product[] = []
-  for (const row of data ?? []) {
-    const p = mapPayloadToProduct(row as { id: string; payload: unknown })
+  for (const row of rows) {
+    const p = mapPayloadToProduct(row as { id: unknown; payload: unknown })
     if (p) products.push(p)
   }
+
+  if (rows.length > 0 && products.length === 0) {
+    return {
+      ok: false,
+      products: [],
+      error:
+        `${rows.length} product row(s) exist but none could be parsed. Ensure each row has a jsonb payload with id, slug, name, category, images, stockQuantity/stock_qty, etc., or recreate rows from Admin → Restore seed.`,
+    }
+  }
+
   return { ok: true, products, error: null }
 }
 

@@ -299,10 +299,17 @@ export function HomeScreen() {
             Loading catalog…
           </p>
         )}
-        {catalogError && products.length === 0 && !catalogLoading && (
-          <p className="text-center text-sm text-red-700 dark:text-red-200" role="alert">
+        {catalogError && !catalogLoading && (
+          <div
+            role="alert"
+            className={`rounded-2xl border px-4 py-3 text-left text-sm leading-relaxed ${
+              products.length > 0
+                ? 'border-amber-400/55 bg-amber-50 text-amber-950 dark:border-amber-600/35 dark:bg-amber-950/35 dark:text-amber-50'
+                : 'border-red-400/55 bg-red-50 text-red-950 dark:border-red-500/35 dark:bg-red-950/40 dark:text-red-50'
+            }`}
+          >
             {catalogError}
-          </p>
+          </div>
         )}
         <section className="space-y-5">
           <SectionHeader
