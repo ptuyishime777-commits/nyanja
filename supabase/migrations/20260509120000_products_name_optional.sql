@@ -1,19 +1,16 @@
--- Products drift fix: hosted DBs may have legacy NOT NULL columns (e.g. `name`)
--- without the app supplying them — upserts target `id` + `payload`.
--- Postgres 23502: null value in column "name" violates not-null constraint
+-- Products drift fix: legacy NOT NULL `name` while app sends `id` + `payload` → 23502.
+-- Canonical model: name is nullable; payload is source of truth.
 
 alter table public.products add column if not exists name text;
 
 update public.products p
-set name = trim(
-  coalesce(
-    nullif(trim(coalesce(p.name, '')), ''),
-    nullif(trim(coalesce(p.payload ->> 'name', '')), ''),
-    trim(coalesce(p.id, '')),
-    'Product'
-  )
+set name = coalesce(
+  nullif(btrim(coalesce(p.name, '')), ''),
+  nullif(btrim(coalesce(p.payload->>'name', '')), ''),
+  nullif(btrim(coalesce(p.id::text, '')), ''),
+  'Product'
 )
 where p.name is null
-   or trim(coalesce(p.name, '')) = '';
+   or length(btrim(coalesce(p.name, ''))) = 0;
 
 alter table public.products alter column name drop not null;
