@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { isAdminUser, useAuthStore } from '../store/useAuthStore'
 import { useCatalogStore } from '../store/useCatalogStore'
@@ -56,6 +56,8 @@ export function ProfileScreen() {
   const sessionUserId = useAuthStore((s) => s.sessionUserId)
   const buckets = useAuthStore((s) => s.buckets)
   const logout = useAuthStore((s) => s.logout)
+  const deleteOrderHistoryItem = useAuthStore((s) => s.deleteOrderHistoryItem)
+  const [deletingOrderId, setDeletingOrderId] = useState<string | null>(null)
 
   const user = useAuthStore((s) =>
     s.sessionUserId
@@ -152,6 +154,22 @@ export function ProfileScreen() {
               <CustomerOrderCard
                 key={o.id}
                 order={o}
+                actions={
+                  <button
+                    type="button"
+                    disabled={deletingOrderId === o.id}
+                    onClick={() => {
+                      if (!window.confirm('Delete this delivery history entry? This cannot be undone.')) return
+                      setDeletingOrderId(o.id)
+                      void deleteOrderHistoryItem(o.id).finally(() => {
+                        setDeletingOrderId((current) => (current === o.id ? null : current))
+                      })
+                    }}
+                    className="inline-flex min-h-9 items-center rounded-xl border border-[#1a1a1a]/20 bg-transparent px-3 py-1.5 text-xs font-semibold tracking-tight text-[#1a1a1a] transition hover:border-[#1a1a1a]/40 hover:bg-black/[0.03] disabled:cursor-not-allowed disabled:opacity-55 dark:border-cream/20 dark:text-cream dark:hover:border-cream/40 dark:hover:bg-cream/[0.05]"
+                  >
+                    {deletingOrderId === o.id ? 'Deleting...' : 'Delete history'}
+                  </button>
+                }
                 extras={<OrderCustomerExtras order={o} />}
               />
             ))}

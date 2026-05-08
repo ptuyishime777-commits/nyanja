@@ -26,12 +26,15 @@ type Props = {
   extras?: ReactNode
   /** Extra block after extras (e.g. lifecycle stepper on dashboard) */
   footer?: ReactNode
+  /** Optional inline actions for this order card */
+  actions?: ReactNode
 }
 
 export function CustomerOrderCard({
   order,
   extras,
   footer,
+  actions,
 }: Props) {
   return (
     <li className="nyanja-card list-none">
@@ -69,6 +72,7 @@ export function CustomerOrderCard({
       <p className="mt-4 font-display text-xl font-semibold tabular-nums tracking-tight text-ink dark:text-cream md:text-[1.35rem]">
         {formatRwf(order.totalRwf)}
       </p>
+      {actions ? <div className="mt-3">{actions}</div> : null}
       {extras ? <div className="mt-1">{extras}</div> : null}
       {footer ? <div className="mt-4 border-t border-[#f0ece8]/80 pt-4 dark:border-cream/10">{footer}</div> : null}
     </li>

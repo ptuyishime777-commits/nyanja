@@ -4,6 +4,7 @@ import type { AuthUser, UserBucket, UserRole } from '../models/user'
 import { isSupabaseConfigured, supabase } from '../lib/supabaseClient'
 import {
   buildBucketsFromRemote,
+  deleteOrderRemote,
   fetchProfilesAndOrders,
   insertOrderRemote,
   persistHubToProfile,
@@ -82,6 +83,8 @@ interface AuthState {
     deliveryPersonName: string,
     deliveryPersonPhone: string,
   ) => Promise<void>
+
+  deleteOrderHistoryItem: (orderId: string) => Promise<void>
 
   /** Customer post-delivery: append reviews to catalog and record avg on the order */
   submitOrderProductReviews: (
@@ -468,6 +471,38 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     })
 
     const { error } = await updateOrderPayloadRemote(orderId, nextOrder)
+    if (error) {
+      set({ buckets: prevBuckets, orderMutationError: error.message })
+    }
+  },
+
+  deleteOrderHistoryItem: async (orderId) => {
+    if (!isSupabaseConfigured()) return
+    const uid = get().sessionUserId
+    if (!uid) return
+
+    const prevBuckets = get().buckets
+    const bucket = prevBuckets[uid]
+    if (!bucket) return
+    const exists = bucket.orders.some((o) => o.id === orderId)
+    if (!exists) return
+
+    set((s) => {
+      const current = s.buckets[uid]
+      if (!current) return s
+      return {
+        buckets: {
+          ...s.buckets,
+          [uid]: {
+            ...current,
+            orders: current.orders.filter((o) => o.id !== orderId),
+          },
+        },
+        orderMutationError: null,
+      }
+    })
+
+    const { error } = await deleteOrderRemote(orderId)
     if (error) {
       set({ buckets: prevBuckets, orderMutationError: error.message })
     }

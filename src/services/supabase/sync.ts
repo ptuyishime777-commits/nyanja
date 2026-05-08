@@ -412,6 +412,15 @@ export async function updateOrderPayloadRemote(orderId: string, payload: PlacedO
   return { error: normalizeOrdersPayloadError(error) }
 }
 
+export async function deleteOrderRemote(orderId: string) {
+  if (!isSupabaseConfigured()) return { error: new Error('Supabase is not configured.') }
+  const { error } = await supabase
+    .from('orders')
+    .delete()
+    .eq('id', orderId)
+  return { error: normalizeOrdersPayloadError(error) }
+}
+
 export async function updateProfileFlagsRemote(
   userId: string,
   patch: { disabled?: boolean; role?: 'customer' | 'admin' },
